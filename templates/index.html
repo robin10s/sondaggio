@@ -20,6 +20,7 @@
 
   <script>
     let responses = [];
+    let userData = {};  // Salviamo qui sesso, età ecc.
 
     async function loadQuestions() {
       console.log("🚀 FUNZIONE loadQuestions() AVVIATA");
@@ -44,7 +45,7 @@
           block.classList.add("question-block");
           if (index === 0) block.classList.add("visible");
 
-          block.innerHTML = `
+          let formContent = `
             <h2>Domanda ${index + 1} di 10</h2>
             <img src="/static/${q.image}" alt="${q.description}">
             <p>${q.description}</p>
@@ -55,13 +56,31 @@
             <form>
               <input type="hidden" name="id_domanda" value="${q.id}">
 
-              <p>Quali audio associ meglio a questo alimento?</p>
+              <p>Quali audio associ meglio a questo alimento? (puoi selezionarne fino a 2)</p>
               <label><input type="checkbox" name="audio_affine" value="1"> Audio 1</label><br>
               <label><input type="checkbox" name="audio_affine" value="2"> Audio 2</label><br>
               <label><input type="checkbox" name="audio_affine" value="3"> Audio 3</label><br>
               <label><input type="checkbox" name="audio_affine" value="4"> Audio 4</label><br>
-              <p class="nota">*Nota: potrebbero esserci due audio uguali. Se li trovi entrambi, selezionali entrambi.</p>
+              <p class="nota">*Nota: potrebbero esserci due audio uguali. Se l' audio che hai scelto compare due volte seleziona entrambi.</p>
 
+              <p>Che emozione ti ha suscitato l'audio che hai considerato più affine?</p>
+              <select name="emozione" required>
+                <option value="">Seleziona</option>
+                <option>Gioia</option>
+                <option>Tristezza</option>
+                <option>Rabbia</option>
+                <option>Paura</option>
+                <option>Sorpresa</option>
+                <option>Disgusto</option>
+                <option>Calma</option>
+                <option>Eccitazione</option>
+                <option>Frustrazione</option>
+              </select><br><br>
+          `;
+
+          // SOLO nella prima domanda, chiediamo i dati anagrafici
+          if (index === 0) {
+            formContent += `
               <p>Quanti anni hai?</p>
               <input type="number" name="eta" required><br>
 
@@ -81,24 +100,15 @@
 
               <p>Dispositivo di ascolto:</p>
               <input type="text" name="dispositivo"><br>
+            `;
+          }
 
-              <p>Che emozione ti ha suscitato l'audio che hai considerato più affine?</p>
-              <select name="emozione">
-                <option value="">Seleziona</option>
-                <option>Gioia</option>
-                <option>Tristezza</option>
-                <option>Rabbia</option>
-                <option>Paura</option>
-                <option>Sorpresa</option>
-                <option>Disgusto</option>
-                <option>Calma</option>
-                <option>Eccitazione</option>
-                <option>Frustrazione</option>
-              </select><br><br>
-
+          formContent += `
               <button type="submit" class="btn">${index < 9 ? "Avanti" : "Invia sondaggio"}</button>
             </form>
           `;
+
+          block.innerHTML = formContent;
 
           block.querySelector("form").addEventListener("submit", (e) => {
             e.preventDefault();
@@ -113,7 +123,20 @@
             data.audio_affine = audioAffini;
 
             data.id_domanda = q.id;
-            responses.push(data);
+
+            if (index === 0) {
+              // Salviamo i dati anagrafici separatamente e li aggiungiamo ad ogni risposta
+              userData = {
+                eta: formData.get("eta"),
+                genere: formData.get("genere"),
+                musica: formData.get("musica"),
+                cucina: formData.get("cucina"),
+                dispositivo: formData.get("dispositivo"),
+              };
+            }
+
+            // Aggiungiamo i dati utente a OGNI risposta
+            responses.push({ ...data, ...userData });
 
             block.classList.remove("visible");
             if (index < 9) {
