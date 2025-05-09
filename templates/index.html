@@ -2,7 +2,7 @@
 <html lang="it">
 <head>
   <meta charset="UTF-8">
-  <title>Sondaggio Cibo-Musica prova</title>
+  <title>Sondaggio Cibo-Musica</title>
   <style>
     body { font-family: Arial, sans-serif; padding: 20px; max-width: 800px; margin: auto; }
     img { width: 100%; max-width: 400px; }
@@ -11,6 +11,7 @@
     audio { margin: 10px 0; display: block; width: 100%; }
     .btn { margin-top: 20px; padding: 10px 20px; font-size: 16px; }
     form p { font-weight: bold; margin-top: 10px; }
+    .nota { font-size: 0.9em; color: gray; margin-bottom: 15px; }
   </style>
 </head>
 <body>
@@ -36,40 +37,52 @@
 
         const container = document.getElementById("quiz-container");
 
-        // 💥 CICLO FOR EACH CORRETTO
         questions.forEach((q, index) => {
-          console.log("Dati della domanda corrente:", q);
-          console.log("Array audio corrente:", q.audio);
+          console.log("Dati domanda:", q);
 
           const block = document.createElement("div");
           block.classList.add("question-block");
           if (index === 0) block.classList.add("visible");
 
           block.innerHTML = `
-            <h2>Domanda ${index + 1}</h2>
+            <h2>Domanda ${index + 1} di 10</h2>
             <img src="/static/${q.image}" alt="${q.description}">
             <p>${q.description}</p>
             <div>
-              ${q.audio.map(a => `<audio src="/static/${a.src}" controls></audio>`).join('')}
+              ${q.audio.map((a, i) => `<audio src="/static/${a.src}" controls></audio>`).join('')}
             </div>
+
             <form>
               <input type="hidden" name="id_domanda" value="${q.id}">
-              <p>Età:</p>
+
+              <p>Quali audio associ meglio a questo alimento? (puoi selezionarne fino a 2)</p>
+              <label><input type="checkbox" name="audio_affine" value="1"> Audio 1</label><br>
+              <label><input type="checkbox" name="audio_affine" value="2"> Audio 2</label><br>
+              <label><input type="checkbox" name="audio_affine" value="3"> Audio 3</label><br>
+              <label><input type="checkbox" name="audio_affine" value="4"> Audio 4</label><br>
+              <p class="nota">*Nota: potrebbero esserci due audio uguali. Se li trovi entrambi, selezionali entrambi.</p>
+
+              <p>Quanti anni hai?</p>
               <input type="number" name="eta" required><br>
-              <p>Genere:</p>
+
+              <p>Qual è il tuo genere?</p>
               <select name="genere" required>
                 <option value="">Seleziona</option>
                 <option>Maschio</option>
                 <option>Femmina</option>
                 <option>Altro</option>
               </select><br>
+
               <p>Musica preferita:</p>
               <input type="text" name="musica"><br>
+
               <p>Cucina preferita:</p>
               <input type="text" name="cucina"><br>
+
               <p>Dispositivo di ascolto:</p>
               <input type="text" name="dispositivo"><br>
-              <p>Emozione suscitata:</p>
+
+              <p>Che emozione ti ha suscitato l'audio che hai considerato più affine?</p>
               <select name="emozione">
                 <option value="">Seleziona</option>
                 <option>Gioia</option>
@@ -91,6 +104,14 @@
             e.preventDefault();
             const formData = new FormData(e.target);
             const data = Object.fromEntries(formData.entries());
+
+            // Gestione checkbox multiple (audio_affine)
+            const audioAffini = [];
+            formData.getAll('audio_affine').forEach(val => {
+              audioAffini.push(val);
+            });
+            data.audio_affine = audioAffini;
+
             data.id_domanda = q.id;
             responses.push(data);
 
