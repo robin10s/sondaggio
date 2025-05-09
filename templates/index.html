@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8">
+  <title>Sondaggio Cibo-Musica prova</title>
+  <style>
+    body { font-family: Arial, sans-serif; padding: 20px; max-width: 800px; margin: auto; }
+    img { width: 100%; max-width: 400px; }
+    .question-block { display: none; margin-bottom: 30px; }
+    .visible { display: block; }
+    audio { margin: 10px 0; display: block; width: 100%; }
+    .btn { margin-top: 20px; padding: 10px 20px; font-size: 16px; }
+    form p { font-weight: bold; margin-top: 10px; }
+  </style>
+</head>
+<body>
+  <h1>Sondaggio: Cibo e Musica</h1>
+  <div id="quiz-container"></div>
+
+  <script>
+    let responses = [];
+
+    async function loadQuestions() {
+      console.log("🚀 FUNZIONE loadQuestions() AVVIATA");
+      try {
+        const res = await fetch("/static/domande.json");
+        const allQuestions = await res.json();
+
+        const pick = (arr, n) => arr.sort(() => 0.5 - Math.random()).slice(0, n);
+        const lowLow = allQuestions.filter(q => q.categoria === "low_low");
+        const midMid = allQuestions.filter(q => q.categoria === "mid_mid");
+        const highHigh = allQuestions.filter(q => q.categoria === "high_high");
+        const altre = allQuestions.filter(q => !["low_low", "mid_mid", "high_high"].includes(q.categoria));
+
+        const questions = [...pick(lowLow, 2), ...pick(midMid, 2), ...pick(highHigh, 2), ...pick(altre, 4)].sort(() => 0.5 - Math.random());
+
+        const container = document.getElementById("quiz-container");
+
+        questions.forEach((q, index) => {
+          const block = document.createElement("div");
+          block.className = "question-block" + (index === 0 ? " visible" : "");
+
+          block.innerHTML = `
+            <h2>Domanda \${index + 1} di 10</h2>
+            <p><strong>\${q.description || ""}</strong></p>
+            <img src="/static/\${q.image}" alt="Alimento"><br>
+            \${q.audio.map((a, i) => `<audio controls src="/static/\${a.src}"></audio>`).join('')}
+            <form>
+              <p>Quale audio associ meglio a questo alimento?</p>
+              <label><input type="radio" name="audio" value="1" required> Audio 1</label><br>
+              <label><input type="radio" name="audio" value="2"> Audio 2</label><br>
+              <label><input type="radio" name="audio" value="3"> Audio 3</label><br>
+              <label><input type="radio" name="audio" value="4"> Audio 4</label><br>
+
+              <p>Quanti anni hai?</p>
+              <input type="number" name="eta" required><br>
+
+              <p>Qual è il tuo genere?</p>
+              <select name="genere" required>
+                <option value="">Seleziona</option>
+                <option value="f">Femminile</option>
+                <option value="m">Maschile</option>
+                <option value="altro">Altro</option>
+                <option value="nsp">Non specifico</option>
+              </select><br>
+
+              <p>Hai un legame con il mondo della musica?</p>
+              <select name="musica" required>
+                <option value="">Seleziona</option>
+                <option value="si">Sì</option>
+                <option value="no">No</option>
+              </select><br>
+
+              <p>Quanto ti senti esperto in cucina?</p>
+              <select name="cucina" required>
+                <option value="">Seleziona</option>
+                <option value="base">Base</option>
+                <option value="intermedio">Intermedio</option>
+                <option value="avanzato">Avanzato</option>
+              </select><br>
+
+              <p>Da che dispositivo stai ascoltando?</p>
+              <input type="text" name="dispositivo" required><br>
+
+              <p>Che emozione ti ha suscitato la combinazione immagine-audio?</p>
+              <select name="emozione" required>
+                <option value="">Seleziona</option>
+                <option>Gioia</option>
+                <option>Sorpresa</option>
+                <option>Paura</option>
+                <option>Rabbia</option>
+                <option>Tristezza</option>
+                <option>Disgusto</option>
+                <option>Serenità</option>
+                <option>Frustrazione</option>
+              </select><br><br>
+
+              <button type="submit" class="btn">\${index < 9 ? "Avanti" : "Invia sondaggio"}</button>
+            </form>
+          `;
+
+          block.querySelector("form").addEventListener("submit", (e) => {
+            e.preventDefault();
+            const formData = new FormData(e.target);
+            const data = Object.fromEntries(formData.entries());
+            data.id_domanda = q.id;
+            responses.push(data);
+
+            block.classList.remove("visible");
+            if (index < 9) {
+              container.children[index + 1].classList.add("visible");
+            } else {
+              inviaRisposte();
+            }
+          });
+
+          container.appendChild(block);
+        });
+
+      } catch (e) {
+        console.error("❌ Errore durante il caricamento delle domande:", e);
+        document.body.innerHTML = "<h2>Errore durante il caricamento del sondaggio.</h2>";
+      }
+    }
+
+    async function inviaRisposte() {
+      const response = await fetch("/submit", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(responses)
+      });
+      document.body.innerHTML = response.ok
+        ? "<h2>Grazie per aver completato il sondaggio!</h2>"
+        : "<h2>Si è verificato un errore durante l'invio.</h2>";
+    }
+
+    window.addEventListener("DOMContentLoaded", () => {
+      loadQuestions();
+    });
+  </script>
+</body>
+</html>
