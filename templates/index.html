@@ -35,56 +35,57 @@
         const questions = [...pick(lowLow, 2), ...pick(midMid, 2), ...pick(highHigh, 2), ...pick(altre, 4)].sort(() => 0.5 - Math.random());
 
         const container = document.getElementById("quiz-container");
-        
-        console.log("Dati della domanda corrente:", q);
-        console.log("Array audio corrente:", q.audio);
 
-        const block = document.createElement("div");
-        block.classList.add("question-block");
-        if (index === 0) block.classList.add("visible");
+        // 💥 CICLO FOR EACH CORRETTO
+        questions.forEach((q, index) => {
+          console.log("Dati della domanda corrente:", q);
+          console.log("Array audio corrente:", q.audio);
 
-        block.innerHTML = `
-                <h2>Domanda ${index + 1}</h2>
-                <img src="/static/${q.image}" alt="${q.description}">
-                <p>${q.description}</p>
-                <div>
-                  ${q.audio.map(a => `<audio src="/static/${a.src}" controls></audio>`).join('')}
-                </div>
-                <form>
-                  <input type="hidden" name="id_domanda" value="${q.id}">
-                  <p>Età:</p>
-                  <input type="number" name="eta" required><br>
-                  <p>Genere:</p>
-                  <select name="genere" required>
-                    <option value="">Seleziona</option>
-                    <option>Maschio</option>
-                    <option>Femmina</option>
-                    <option>Altro</option>
-                  </select><br>
-                  <p>Musica preferita:</p>
-                  <input type="text" name="musica"><br>
-                  <p>Cucina preferita:</p>
-                  <input type="text" name="cucina"><br>
-                  <p>Dispositivo di ascolto:</p>
-                  <input type="text" name="dispositivo"><br>
-                  <p>Emozione suscitata:</p>
-                  <select name="emozione">
-                    <option value="">Seleziona</option>
-                    <option>Gioia</option>
-                    <option>Tristezza</option>
-                    <option>Rabbia</option>
-                    <option>Paura</option>
-                    <option>Sorpresa</option>
-                    <option>Disgusto</option>
-                    <option>Calma</option>
-                    <option>Eccitazione</option>
-                    <option>Frustrazione</option>
-                  </select><br><br>
+          const block = document.createElement("div");
+          block.classList.add("question-block");
+          if (index === 0) block.classList.add("visible");
 
-                  <button type="submit" class="btn">${index < 9 ? "Avanti" : "Invia sondaggio"}</button>
-                </form>
-              `;
+          block.innerHTML = `
+            <h2>Domanda ${index + 1}</h2>
+            <img src="/static/${q.image}" alt="${q.description}">
+            <p>${q.description}</p>
+            <div>
+              ${q.audio.map(a => `<audio src="/static/${a.src}" controls></audio>`).join('')}
+            </div>
+            <form>
+              <input type="hidden" name="id_domanda" value="${q.id}">
+              <p>Età:</p>
+              <input type="number" name="eta" required><br>
+              <p>Genere:</p>
+              <select name="genere" required>
+                <option value="">Seleziona</option>
+                <option>Maschio</option>
+                <option>Femmina</option>
+                <option>Altro</option>
+              </select><br>
+              <p>Musica preferita:</p>
+              <input type="text" name="musica"><br>
+              <p>Cucina preferita:</p>
+              <input type="text" name="cucina"><br>
+              <p>Dispositivo di ascolto:</p>
+              <input type="text" name="dispositivo"><br>
+              <p>Emozione suscitata:</p>
+              <select name="emozione">
+                <option value="">Seleziona</option>
+                <option>Gioia</option>
+                <option>Tristezza</option>
+                <option>Rabbia</option>
+                <option>Paura</option>
+                <option>Sorpresa</option>
+                <option>Disgusto</option>
+                <option>Calma</option>
+                <option>Eccitazione</option>
+                <option>Frustrazione</option>
+              </select><br><br>
 
+              <button type="submit" class="btn">${index < 9 ? "Avanti" : "Invia sondaggio"}</button>
+            </form>
+          `;
 
           block.querySelector("form").addEventListener("submit", (e) => {
             e.preventDefault();
