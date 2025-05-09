@@ -35,69 +35,56 @@
         const questions = [...pick(lowLow, 2), ...pick(midMid, 2), ...pick(highHigh, 2), ...pick(altre, 4)].sort(() => 0.5 - Math.random());
 
         const container = document.getElementById("quiz-container");
+        
+        console.log("Dati della domanda corrente:", q);
+        console.log("Array audio corrente:", q.audio);
 
-        questions.forEach((q, index) => {
-          const block = document.createElement("div");
-          block.className = "question-block" + (index === 0 ? " visible" : "");
+        const block = document.createElement("div");
+        block.classList.add("question-block");
+        if (index === 0) block.classList.add("visible");
 
-          block.innerHTML = `
-            <h2>Domanda \${index + 1} di 10</h2>
-            <p><strong>\${q.description || ""}</strong></p>
-            <img src="/static/\${q.image}" alt="Alimento"><br>
-            \${q.audio.map((a, i) => `<audio controls src="/static/\${a.src}"></audio>`).join('')}
-            <form>
-              <p>Quale audio associ meglio a questo alimento?</p>
-              <label><input type="radio" name="audio" value="1" required> Audio 1</label><br>
-              <label><input type="radio" name="audio" value="2"> Audio 2</label><br>
-              <label><input type="radio" name="audio" value="3"> Audio 3</label><br>
-              <label><input type="radio" name="audio" value="4"> Audio 4</label><br>
+        block.innerHTML = `
+                <h2>Domanda ${index + 1}</h2>
+                <img src="/static/${q.image}" alt="${q.description}">
+                <p>${q.description}</p>
+                <div>
+                  ${q.audio.map(a => `<audio src="/static/${a.src}" controls></audio>`).join('')}
+                </div>
+                <form>
+                  <input type="hidden" name="id_domanda" value="${q.id}">
+                  <p>Età:</p>
+                  <input type="number" name="eta" required><br>
+                  <p>Genere:</p>
+                  <select name="genere" required>
+                    <option value="">Seleziona</option>
+                    <option>Maschio</option>
+                    <option>Femmina</option>
+                    <option>Altro</option>
+                  </select><br>
+                  <p>Musica preferita:</p>
+                  <input type="text" name="musica"><br>
+                  <p>Cucina preferita:</p>
+                  <input type="text" name="cucina"><br>
+                  <p>Dispositivo di ascolto:</p>
+                  <input type="text" name="dispositivo"><br>
+                  <p>Emozione suscitata:</p>
+                  <select name="emozione">
+                    <option value="">Seleziona</option>
+                    <option>Gioia</option>
+                    <option>Tristezza</option>
+                    <option>Rabbia</option>
+                    <option>Paura</option>
+                    <option>Sorpresa</option>
+                    <option>Disgusto</option>
+                    <option>Calma</option>
+                    <option>Eccitazione</option>
+                    <option>Frustrazione</option>
+                  </select><br><br>
 
-              <p>Quanti anni hai?</p>
-              <input type="number" name="eta" required><br>
+                  <button type="submit" class="btn">${index < 9 ? "Avanti" : "Invia sondaggio"}</button>
+                </form>
+              `;
 
-              <p>Qual è il tuo genere?</p>
-              <select name="genere" required>
-                <option value="">Seleziona</option>
-                <option value="f">Femminile</option>
-                <option value="m">Maschile</option>
-                <option value="altro">Altro</option>
-                <option value="nsp">Non specifico</option>
-              </select><br>
-
-              <p>Hai un legame con il mondo della musica?</p>
-              <select name="musica" required>
-                <option value="">Seleziona</option>
-                <option value="si">Sì</option>
-                <option value="no">No</option>
-              </select><br>
-
-              <p>Quanto ti senti esperto in cucina?</p>
-              <select name="cucina" required>
-                <option value="">Seleziona</option>
-                <option value="base">Base</option>
-                <option value="intermedio">Intermedio</option>
-                <option value="avanzato">Avanzato</option>
-              </select><br>
-
-              <p>Da che dispositivo stai ascoltando?</p>
-              <input type="text" name="dispositivo" required><br>
-
-              <p>Che emozione ti ha suscitato la combinazione immagine-audio?</p>
-              <select name="emozione" required>
-                <option value="">Seleziona</option>
-                <option>Gioia</option>
-                <option>Sorpresa</option>
-                <option>Paura</option>
-                <option>Rabbia</option>
-                <option>Tristezza</option>
-                <option>Disgusto</option>
-                <option>Serenità</option>
-                <option>Frustrazione</option>
-              </select><br><br>
-
-              <button type="submit" class="btn">\${index < 9 ? "Avanti" : "Invia sondaggio"}</button>
-            </form>
-          `;
 
           block.querySelector("form").addEventListener("submit", (e) => {
             e.preventDefault();
