@@ -83,6 +83,7 @@
               </select><br><br>
           `;
 
+          // Se è la prima domanda ➔ aggiungiamo la parte anagrafica
           if (index === 0) {
             formContent += `
               <p>Quanti anni hai?</p>
@@ -96,14 +97,39 @@
                 <option>Altro</option>
               </select><br>
 
-              <p>Musica preferita:</p>
-              <input type="text" name="musica"><br>
+              <p>Quali generi musicali preferisci? (puoi selezionarne più di uno)</p>
+              <label><input type="checkbox" name="musica" value="Pop"> Pop</label><br>
+              <label><input type="checkbox" name="musica" value="Rock"> Rock</label><br>
+              <label><input type="checkbox" name="musica" value="Classica"> Classica</label><br>
+              <label><input type="checkbox" name="musica" value="Jazz"> Jazz</label><br>
+              <label><input type="checkbox" name="musica" value="Elettronica"> Elettronica</label><br>
+              <label><input type="checkbox" name="musica" value="Rap"> Rap / Hip-Hop</label><br>
+              <label><input type="checkbox" name="musica" value="Folk"> Folk / Tradizionale</label><br>
+              <label><input type="checkbox" name="musica" value="Nessuno"> Non ascolto musica</label><br>
 
-              <p>Cucina preferita:</p>
-              <input type="text" name="cucina"><br>
+              <p>Con quali dispositivi ascolti la musica? (puoi selezionarne più di uno)</p>
+              <label><input type="checkbox" name="dispositivo" value="Cuffie"> Cuffie / Auricolari</label><br>
+              <label><input type="checkbox" name="dispositivo" value="Bluetooth"> Speaker Bluetooth</label><br>
+              <label><input type="checkbox" name="dispositivo" value="Hi-Fi"> Stereo Hi-Fi</label><br>
+              <label><input type="checkbox" name="dispositivo" value="PC"> PC / Laptop</label><br>
+              <label><input type="checkbox" name="dispositivo" value="Smartphone"> Smartphone</label><br>
+              <label><input type="checkbox" name="dispositivo" value="Altro"> Altro</label><br>
 
-              <p>Dispositivo di ascolto:</p>
-              <input type="text" name="dispositivo"><br>
+              <p>Hai esperienza o interesse nella musica?</p>
+              <select name="musica_esperienza" required>
+                <option value="">Seleziona</option>
+                <option value="nessuna">Nessuna esperienza</option>
+                <option value="appassionato">Appassionato di musica</option>
+                <option value="musicista">Musicista / professionista</option>
+              </select><br>
+
+              <p>Hai esperienza o interesse nella cucina?</p>
+              <select name="cucina" required>
+                <option value="">Seleziona</option>
+                <option value="nessuna">Nessuna esperienza</option>
+                <option value="appassionato">Appassionato di cucina</option>
+                <option value="professionista">Professionista / lavoro nel settore</option>
+              </select><br>
             `;
           }
 
@@ -125,16 +151,29 @@
             });
             data.audio_affine = audioAffini;
 
-            data.id_domanda = q.id;
-
             if (index === 0) {
-              userData = {
-                eta: formData.get("eta"),
-                genere: formData.get("genere"),
-                musica: formData.get("musica"),
-                cucina: formData.get("cucina"),
-                dispositivo: formData.get("dispositivo"),
-              };
+              // Musica (multi)
+              const musiche = [];
+              formData.getAll('musica').forEach(val => {
+                musiche.push(val);
+              });
+              userData.musica = musiche;
+
+              // Dispositivi (multi)
+              const dispositivi = [];
+              formData.getAll('dispositivo').forEach(val => {
+                dispositivi.push(val);
+              });
+              userData.dispositivo = dispositivi;
+
+              // Cucina (singola)
+              userData.cucina = formData.get("cucina");
+
+              // Esperienza musica (singola)
+              userData.musica_esperienza = formData.get("musica_esperienza");
+
+              userData.eta = formData.get("eta");
+              userData.genere = formData.get("genere");
             }
 
             responses.push({ ...data, ...userData });
