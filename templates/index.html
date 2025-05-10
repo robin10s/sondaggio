@@ -20,21 +20,26 @@
 
   <script>
     let responses = [];
-    let userData = {};  // Salviamo qui sesso, età ecc.
+    let userData = {};
 
     async function loadQuestions() {
       console.log("🚀 FUNZIONE loadQuestions() AVVIATA");
       try {
         const res = await fetch("/static/domande.json");
-        const allQuestions = await res.json();
+        let allQuestions = await res.json();
 
-        const pick = (arr, n) => arr.sort(() => 0.5 - Math.random()).slice(0, n);
-        const lowLow = allQuestions.filter(q => q.categoria === "low_low");
-        const midMid = allQuestions.filter(q => q.categoria === "mid_mid");
-        const highHigh = allQuestions.filter(q => q.categoria === "high_high");
-        const altre = allQuestions.filter(q => !["low_low", "mid_mid", "high_high"].includes(q.categoria));
+        // FILTRO: solo immagini fino alla 896.jpg
+        allQuestions = allQuestions.filter(q => {
+          const match = q.image.match(/(\d+)\.jpg$/);
+          if (!match) return false;
+          const number = parseInt(match[1], 10);
+          return number <= 896;
+        });
 
-        const questions = [...pick(lowLow, 2), ...pick(midMid, 2), ...pick(highHigh, 2), ...pick(altre, 4)].sort(() => 0.5 - Math.random());
+        console.log(`✅ Domande filtrate (≤896): ${allQuestions.length}`);
+
+        // Scegliamo 10 domande TOTALMENTE random
+        const questions = allQuestions.sort(() => 0.5 - Math.random()).slice(0, 10);
 
         const container = document.getElementById("quiz-container");
 
@@ -61,7 +66,7 @@
               <label><input type="checkbox" name="audio_affine" value="2"> Audio 2</label><br>
               <label><input type="checkbox" name="audio_affine" value="3"> Audio 3</label><br>
               <label><input type="checkbox" name="audio_affine" value="4"> Audio 4</label><br>
-              <p class="nota">*Nota: potrebbero esserci due audio uguali. Se l' audio che hai scelto compare due volte seleziona entrambi.</p>
+              <p class="nota">*Nota: potrebbero esserci due audio uguali. Se li trovi entrambi, selezionali entrambi.</p>
 
               <p>Che emozione ti ha suscitato l'audio che hai considerato più affine?</p>
               <select name="emozione" required>
@@ -78,7 +83,6 @@
               </select><br><br>
           `;
 
-          // SOLO nella prima domanda, chiediamo i dati anagrafici
           if (index === 0) {
             formContent += `
               <p>Quanti anni hai?</p>
@@ -115,7 +119,6 @@
             const formData = new FormData(e.target);
             const data = Object.fromEntries(formData.entries());
 
-            // Gestione checkbox multiple (audio_affine)
             const audioAffini = [];
             formData.getAll('audio_affine').forEach(val => {
               audioAffini.push(val);
@@ -125,7 +128,6 @@
             data.id_domanda = q.id;
 
             if (index === 0) {
-              // Salviamo i dati anagrafici separatamente e li aggiungiamo ad ogni risposta
               userData = {
                 eta: formData.get("eta"),
                 genere: formData.get("genere"),
@@ -135,7 +137,6 @@
               };
             }
 
-            // Aggiungiamo i dati utente a OGNI risposta
             responses.push({ ...data, ...userData });
 
             block.classList.remove("visible");
