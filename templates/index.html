@@ -1,171 +1,82 @@
-
 <!DOCTYPE html>
 <html lang="it">
 <head>
   <meta charset="UTF-8">
-  <title>Sondaggio Cibo-Musica</title>
+  <title>Dati finali</title>
   <style>
-    body { font-family: Arial, sans-serif; padding: 20px; max-width: 800px; margin: auto; }
-    img { width: 100%; max-width: 400px; }
-    .question-block { display: none; margin-bottom: 30px; }
-    .visible { display: block; }
-    audio { margin: 10px 0; display: block; width: 100%; }
+    body { font-family: Arial, sans-serif; padding: 20px; max-width: 700px; margin: auto; }
+    form { margin-top: 30px; }
+    label { display: block; margin-top: 15px; }
     .btn { margin-top: 20px; padding: 10px 20px; font-size: 16px; }
-    form p { font-weight: bold; margin-top: 10px; }
   </style>
 </head>
 <body>
-  <h1>Sondaggio: Cibo e Musica</h1>
-  <div id="quiz-container"></div>
+  <h1>Ultime domande prima di completare il sondaggio</h1>
+  <form id="final-form">
+    <label>Quanti anni hai?
+      <input type="number" name="eta" min="18" required>
+    </label>
+
+    <label>Qual è il tuo genere?
+      <select name="genere" required>
+        <option value="">Seleziona</option>
+        <option value="f">Femminile</option>
+        <option value="m">Maschile</option>
+        <option value="altro">Altro</option>
+        <option value="nsp">Non specifico</option>
+      </select>
+    </label>
+
+    <label>Hai interesse o esperienza nel mondo della musica?
+      <select name="musica" required>
+        <option value="">Seleziona</option>
+        <option value="nessuna">Nessuna</option>
+        <option value="interesse">Interessato/a</option>
+        <option value="musicista">Musicista o esperto/a</option>
+      </select>
+    </label>
+
+    <label>Lavori nel campo culinario o sei appassionato?
+      <select name="cucina" required>
+        <option value="">Seleziona</option>
+        <option value="nessuna">Nessuna</option>
+        <option value="appassionato">Appassionato/a</option>
+        <option value="professionista">Professionista</option>
+      </select>
+    </label>
+
+    <label>Con quale dispositivo acustico hai ascoltato i brani musicali del questionario?
+      <select name="dispositivo" required>
+        <option value="">Seleziona</option>
+        <option value="auricolari">Auricolari</option>
+        <option value="cuffie">Cuffie over-ear</option>
+        <option value="altoparlanti">Altoparlanti</option>
+        <option value="telefono">Altoparlanti del telefono</option>
+      </select>
+    </label>
+
+    <button type="submit" class="btn">Invia</button>
+  </form>
 
   <script>
-    let responses = [];
+    document.getElementById("final-form").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const risposte = JSON.parse(localStorage.getItem("risposteQuiz"));
+      const finali = Object.fromEntries(new FormData(e.target));
 
-    async function loadQuestions() {
-      try {
-        const res = await fetch("/static/domande.json");
-        const allQuestions = await res.json();
+      const datiCombinati = risposte.map(r => ({ ...r, ...finali }));
 
-        const pick = (arr, n) => arr.sort(() => 0.5 - Math.random()).slice(0, n);
-        const lowLow = allQuestions.filter(q => q.categoria === "low_low");
-        const midMid = allQuestions.filter(q => q.categoria === "mid_mid");
-        const highHigh = allQuestions.filter(q => q.categoria === "high_high");
-        const altre = allQuestions.filter(q => !["low_low", "mid_mid", "high_high"].includes(q.categoria));
-
-        const questions = [...pick(lowLow, 2), ...pick(midMid, 2), ...pick(highHigh, 2), ...pick(altre, 4)].sort(() => 0.5 - Math.random());
-
-        const container = document.getElementById("quiz-container");
-
-        questions.forEach((q, index) => {
-          const block = document.createElement("div");
-          block.className = "question-block" + (index === 0 ? " visible" : "");
-
-          block.innerHTML = \`
-            <h2>Domanda \${index + 1} di 10</h2>
-            <p><strong>Osserva l'immagine dell'alimento e ascolta i 4 brani successivi. Può capitare che alcuni brani siano ripetuti. In tal caso, selezionali entrambi se ritieni siano adatti.</strong></p>
-            <p><strong>\${q.description || ""}</strong></p>
-            <img src="/static/\${q.image}" alt="Alimento"><br>
-            \${q.audio.map((a, i) => \`<audio controls src="/static/\${a.src}"></audio>\`).join('')}
-            <form>
-              <p>Quali audio associ meglio a questo alimento? (Puoi selezionare più di uno)</p>
-              <label><input type="checkbox" name="audio" value="1"> Audio 1</label><br>
-              <label><input type="checkbox" name="audio" value="2"> Audio 2</label><br>
-              <label><input type="checkbox" name="audio" value="3"> Audio 3</label><br>
-              <label><input type="checkbox" name="audio" value="4"> Audio 4</label><br>
-
-              <p>Quale emozione associ a entrambi gli stimoli (immagine e audio più affine)?</p>
-              <select name="emozione" required>
-                <option value="">Seleziona</option>
-                <option>Gioia</option>
-                <option>Sorpresa</option>
-                <option>Paura</option>
-                <option>Rabbia</option>
-                <option>Tristezza</option>
-                <option>Disgusto</option>
-                <option>Serenità</option>
-                <option>Frustrazione</option>
-              </select><br><br>
-
-              <button type="submit" class="btn">\${index < 9 ? "Avanti" : "Passa alle Generalità"}</button>
-            </form>
-          \`;
-
-          block.querySelector("form").addEventListener("submit", (e) => {
-            e.preventDefault();
-            const formData = new FormData(e.target);
-            const data = Object.fromEntries(formData.entries());
-            data.audio = formData.getAll("audio");
-            data.id_domanda = q.id;
-            responses.push(data);
-
-            block.classList.remove("visible");
-            if (index < 9) {
-              container.children[index + 1].classList.add("visible");
-            } else {
-              mostraGeneralita();
-            }
-          });
-
-          container.appendChild(block);
-        });
-      } catch (e) {
-        console.error("❌ Errore durante il caricamento delle domande:", e);
-        document.body.innerHTML = "<h2>Errore durante il caricamento del sondaggio.</h2>";
-      }
-    }
-
-    function mostraGeneralita() {
-      const container = document.getElementById("quiz-container");
-      const finalBlock = document.createElement("div");
-      finalBlock.className = "question-block visible";
-      finalBlock.innerHTML = \`
-        <h2>Ultime domande</h2>
-        <form>
-          <p>Età:</p>
-          <input type="number" name="eta" min="18" required><br>
-
-          <p>Genere:</p>
-          <select name="genere" required>
-            <option value="">Seleziona</option>
-            <option>Femminile</option>
-            <option>Maschile</option>
-            <option>Altro</option>
-            <option>Non specificato</option>
-          </select><br>
-
-          <p>Hai interesse o esperienza nella musica?</p>
-          <select name="musica" required>
-            <option value="">Seleziona</option>
-            <option>Professionista</option>
-            <option>Appassionato</option>
-            <option>Nessuna esperienza</option>
-          </select><br>
-
-          <p>Lavori o sei appassionato/a di cucina?</p>
-          <select name="cucina" required>
-            <option value="">Seleziona</option>
-            <option>Professionista</option>
-            <option>Appassionato</option>
-            <option>Nessuna esperienza</option>
-          </select><br>
-
-          <p>Con quale dispositivo hai ascoltato i brani?</p>
-          <select name="dispositivo" required>
-            <option value="">Seleziona</option>
-            <option>Computer (altoparlanti integrati)</option>
-            <option>Computer (con cuffie)</option>
-            <option>Smartphone</option>
-            <option>Tablet</option>
-            <option>Altoparlanti esterni</option>
-          </select><br><br>
-
-          <button type="submit" class="btn">Invia sondaggio</button>
-        </form>
-      \`;
-
-      finalBlock.querySelector("form").addEventListener("submit", async (e) => {
-        e.preventDefault();
-        const formData = new FormData(e.target);
-        const data = Object.fromEntries(formData.entries());
-        responses.forEach(r => Object.assign(r, data));
-
-        const response = await fetch("/submit", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(responses)
-        });
-        document.body.innerHTML = response.ok
-          ? "<h2>Grazie per aver completato il sondaggio!</h2>"
-          : "<h2>Si è verificato un errore durante l'invio.</h2>";
+      const resp = await fetch("https://api.sheetbest.com/sheets/0ae1a0d6-e98b-421a-81d0-324450492f9c", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(datiCombinati)
       });
 
-      container.innerHTML = "";
-      container.appendChild(finalBlock);
-    }
-
-    window.addEventListener("DOMContentLoaded", () => {
-      loadQuestions();
+      document.body.innerHTML = resp.ok
+        ? "<h2>Grazie per aver partecipato al sondaggio!</h2>"
+        : "<h2>Errore durante l'invio. Riprova più tardi.</h2>";
     });
   </script>
 </body>
 </html>
+
