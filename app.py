@@ -1,5 +1,5 @@
 from flask import Flask, render_template, request, jsonify
-import csv
+import requests
 import os
 
 app = Flask(__name__)
@@ -10,25 +10,13 @@ def index():
 
 @app.route('/submit', methods=['POST'])
 def submit():
-    data = request.json  # <-- Questo è una LISTA di risposte (10 risposte)
-    if not os.path.exists("risposte"):
-        os.makedirs("risposte")
+    data = request.json
 
-    csv_file = "risposte/risposte.csv"
+    SHEET_BEST_URL = "https://api.sheetbest.com/sheets/0ae1a0d6-e98b-421a-81d0-324450492f9c"
 
-    # Se il file NON esiste, creiamo l'header
-    file_exists = os.path.isfile(csv_file)
-
-    with open(csv_file, "a", newline='', encoding="utf-8") as f:
-        writer = None
-        for risposta in data:
-            if writer is None:
-                # Scriviamo l'header una sola volta se il file è nuovo
-                fieldnames = list(risposta.keys())
-                writer = csv.DictWriter(f, fieldnames=fieldnames)
-                if not file_exists:
-                    writer.writeheader()
-            writer.writerow(risposta)
+    for riga in data:
+        res = requests.post(SHEET_BEST_URL, json=riga)
+        print("Inviato:", res.status_code)
 
     return jsonify({"status": "ok"})
 
