@@ -47,7 +47,7 @@
             <img src="/static/${q.image}" alt="Alimento"><br>
             ${q.audio.map((a, i) => `<audio controls src="/static/${a.src}"></audio>`).join('')}
             <form>
-              <p>Quale/i audio associ meglio a questo alimento? (puoi selezionare fino a 2)</p>
+              <p>Quale audio associ meglio a questo alimento? (se trovi 2 audio uguali e sono la tua scelta, seleziona entrambi)</p>
               ${q.audio.map((a, i) => `<label><input type="checkbox" name="audio" value="${i + 1}"> Audio ${i + 1}</label><br>`).join('')}
 
               <p>Quale emozione associ a entrambi gli stimoli (immagine e audio scelto)?</p>
