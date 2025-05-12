@@ -1,14 +1,14 @@
 <!DOCTYPE html>
 <html lang="it">
 <head>
-  <meta charset="UTF-8">
+  <meta charset="UTF-8" />
   <title>Sondaggio Cibo-Musica</title>
   <style>
     body { font-family: Arial, sans-serif; padding: 20px; max-width: 800px; margin: auto; }
     img { width: 100%; max-width: 400px; }
-    .question-block { display: none; margin-bottom: 30px; }
+    .question-block, #final-form, #thankyou { display: none; margin-bottom: 30px; }
     .visible { display: block; }
-    audio { margin: 10px 0; display: block; width: 100%; }
+    audio { display: block; margin: 10px 0; width: 100%; }
     .btn { margin-top: 20px; padding: 10px 20px; font-size: 16px; }
     form p { font-weight: bold; margin-top: 10px; }
   </style>
@@ -16,81 +16,137 @@
 <body>
   <h1>Sondaggio: Cibo e Musica</h1>
   <div id="quiz-container"></div>
+  <div id="final-form">
+    <h2>Domande finali</h2>
+    <form id="generalita-form">
+      <p>Quanti anni hai?</p>
+      <input type="number" name="eta" min="18" required><br>
+
+      <p>Qual è il tuo genere?</p>
+      <select name="genere" required>
+        <option value="">Seleziona</option>
+        <option>Maschile</option>
+        <option>Femminile</option>
+        <option>Altro</option>
+        <option>Preferisco non dirlo</option>
+      </select><br>
+
+      <p>Hai interesse o esperienza nel campo musicale?</p>
+      <select name="musica" required>
+        <option value="">Seleziona</option>
+        <option>Appassionato/a</option>
+        <option>Professionista</option>
+        <option>Nessuna esperienza</option>
+      </select><br>
+
+      <p>Hai interesse o esperienza nel campo culinario?</p>
+      <select name="cucina" required>
+        <option value="">Seleziona</option>
+        <option>Appassionato/a</option>
+        <option>Professionista</option>
+        <option>Nessuna esperienza</option>
+      </select><br>
+
+      <p>Con quale dispositivo hai ascoltato i brani?</p>
+      <select name="dispositivo" required>
+        <option value="">Seleziona</option>
+        <option>Smartphone</option>
+        <option>PC con cuffie</option>
+        <option>PC con altoparlanti</option>
+        <option>Tablet</option>
+        <option>Altro</option>
+      </select><br>
+
+      <p>Quale emozione hai percepito durante il sondaggio?</p>
+      <select name="emozione" required>
+        <option value="">Seleziona</option>
+        <option>Gioia</option>
+        <option>Tristezza</option>
+        <option>Rabbia</option>
+        <option>Paura</option>
+        <option>Sorpresa</option>
+        <option>Disgusto</option>
+        <option>Serenità</option>
+        <option>Frustrazione</option>
+      </select><br><br>
+
+      <button type="submit" class="btn">Invia sondaggio</button>
+    </form>
+  </div>
+  <div id="thankyou">
+    <h2>Grazie per aver completato il sondaggio!</h2>
+    <p>Le tue risposte sono state salvate correttamente. Se conosci altre persone interessate, ti invitiamo a condividere questo sondaggio.</p>
+  </div>
 
   <script>
-    let responses = [];
+    const responses = [];
+    let questions = [];
 
     async function loadQuestions() {
-      console.log("🚀 Caricamento domande...");
-      try {
-        const res = await fetch("/static/domande.json");
-        const allQuestions = await res.json();
+      const res = await fetch("/static/domande.json");
+      const all = await res.json();
+      const filtered = all.filter(q => {
+        const n = parseInt(q.image.match(/\d+/)?.[0]);
+        return n >= 2 && n <= 896 && q.audio && q.audio.length >= 4;
+      });
+      questions = filtered.sort(() => 0.5 - Math.random()).slice(0, 10);
+      const container = document.getElementById("quiz-container");
 
-        // Filtra domande con ID da 2 a 896 e almeno 4 audio
-        const validQuestions = allQuestions.filter(q =>
-          q.id >= 2 && q.id <= 896 && q.audio && q.audio.length >= 4
-        );
-
-        // Prendi 10 domande random
-        const questions = validQuestions.sort(() => 0.5 - Math.random()).slice(0, 10);
-
-        const container = document.getElementById("quiz-container");
-
-        questions.forEach((q, index) => {
-          const block = document.createElement("div");
-          block.className = "question-block" + (index === 0 ? " visible" : "");
-
-          block.innerHTML = `
-            <h2>Domanda ${index + 1} di 10</h2>
-            <p><strong>Osserva l'immagine dell'alimento e ascolta i 4 brani successivi, successivamente rispondi alle domande sottostanti.</strong></p>
-            <img src="/static/${q.image}" alt="Alimento"><br>
-            ${q.audio.slice(0, 4).map((a, i) => `<audio controls src="/static/${a.src}"></audio>`).join('')}
-            <form>
-              <p>Quale/i audio associ meglio a questo alimento? (puoi selezionarne fino a 2)</p>
-              ${q.audio.slice(0, 4).map((_, i) => `<label><input type="checkbox" name="audio" value="${i+1}"> Audio ${i+1}</label><br>`).join('')}
-
-              <p>Quale emozione associ a entrambi gli stimoli (immagine e audio selezionato)?</p>
-              <select name="emozione" required>
-                <option value="">Seleziona</option>
-                <option>Gioia</option>
-                <option>Sorpresa</option>
-                <option>Paura</option>
-                <option>Rabbia</option>
-                <option>Tristezza</option>
-                <option>Disgusto</option>
-                <option>Serenità</option>
-                <option>Frustrazione</option>
-              </select><br><br>
-
-              <button type="submit" class="btn">${index < 9 ? "Avanti" : "Vai alle domande finali"}</button>
-            </form>
-          `;
-
-          block.querySelector("form").addEventListener("submit", (e) => {
-            e.preventDefault();
-            const formData = new FormData(e.target);
-            const data = Object.fromEntries(formData.entries());
-            data.audio = formData.getAll("audio");
-            data.id_domanda = q.id;
-            responses.push(data);
-
-            block.classList.remove("visible");
-            if (index < 9) {
-              container.children[index + 1].classList.add("visible");
-            } else {
-              localStorage.setItem("risposteParziali", JSON.stringify(responses));
-              window.location.href = "/finale";
-            }
-          });
-
-          container.appendChild(block);
+      questions.forEach((q, index) => {
+        const block = document.createElement("div");
+        block.className = "question-block" + (index === 0 ? " visible" : "");
+        block.innerHTML = `
+          <h2>Domanda ${index + 1} di 10</h2>
+          <p>Osserva l'immagine dell'alimento e ascolta i 4 brani successivi, successivamente rispondi alle domande sottostanti.</p>
+          <img src="/static/${q.image}" alt="alimento"><br>
+          ${q.audio.map((a, i) => `<audio controls src="/static/${a.src}"></audio>`).join("")}
+          <form>
+            <p>Quale audio associ meglio a questo alimento? (Puoi selezionarne fino a due)</p>
+            ${q.audio.map((_, i) => `
+              <label><input type="checkbox" name="audio" value="${i + 1}"> Audio ${i + 1}</label><br>
+            `).join("")}
+            <button type="submit" class="btn">Avanti</button>
+          </form>
+        `;
+        block.querySelector("form").addEventListener("submit", e => {
+          e.preventDefault();
+          const formData = new FormData(e.target);
+          const audioScelti = formData.getAll("audio");
+          if (audioScelti.length === 0 || audioScelti.length > 2) {
+            alert("Seleziona uno o due audio.");
+            return;
+          }
+          responses.push({ id_domanda: q.id, audio: audioScelti });
+          block.classList.remove("visible");
+          if (index < 9) {
+            container.children[index + 1].classList.add("visible");
+          } else {
+            document.getElementById("final-form").style.display = "block";
+          }
         });
-
-      } catch (e) {
-        console.error("❌ Errore durante il caricamento delle domande:", e);
-        document.body.innerHTML = "<h2>Errore durante il caricamento del sondaggio.</h2>";
-      }
+        container.appendChild(block);
+      });
     }
+
+    document.getElementById("generalita-form").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const formData = new FormData(e.target);
+      const datiFinali = Object.fromEntries(formData.entries());
+      const pacchetto = { risposte: responses, ...datiFinali };
+
+      const r = await fetch("https://api.sheetbest.com/sheets/0ae1a0d6-e98b-421a-81d0-324450492f9c", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(pacchetto)
+      });
+
+      if (r.ok) {
+        document.getElementById("final-form").style.display = "none";
+        document.getElementById("thankyou").style.display = "block";
+      } else {
+        alert("Errore durante l'invio.");
+      }
+    });
 
     window.addEventListener("DOMContentLoaded", loadQuestions);
   </script>
