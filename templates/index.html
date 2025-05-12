@@ -135,7 +135,13 @@
         const response = await fetch("https://api.sheetbest.com/sheets/17c1eaf5-d430-4787-beca-d0d067c61950",{
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(dataToSend)
+          for (const responseData of dataToSend) {
+            await fetch("https://api.sheetbest.com/sheets/0ae1a0d6-e98b-421a-81d0-324450492f9c", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify(responseData)
+            });
+          }
         });
 
         document.body.innerHTML = response.ok
