@@ -98,13 +98,15 @@
             <option>Femmina</option>
             <option>Altro</option>
           </select><br>
-          <p>Hai un legame con il mondo della musica?</p>
+          <p>Hai esperienza o interesse nella musica?</p>
           <select name="musica" required>
             <option value="">Seleziona</option>
-            <option>Sì</option>
-            <option>No</option>
+            <option>Nessuna esperienza né interesse</option>
+            <option>Interesse personale (ascoltatore, appassionato)</option>
+            <option>Formazione musicale amatoriale</option>
+            <option>Professionista del settore musicale</option>
           </select><br>
-          <p>Quanto ti senti esperto in cucina?</p>
+          <p>Quanto ti senti esperta/o in cucina?</p>
           <select name="cucina" required>
             <option value="">Seleziona</option>
             <option>Base</option>
@@ -130,7 +132,7 @@
         const finalData = Object.fromEntries(formData.entries());
         const dataToSend = responses.map(r => ({ ...r, ...finalData }));
 
-        const response = await fetch("/submit", {
+        const response = await fetch("https://api.sheetbest.com/sheets/17c1eaf5-d430-4787-beca-d0d067c61950",{
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(dataToSend)
