@@ -1,18 +1,22 @@
 from flask import Flask, render_template, request, jsonify
-import requests
 import os
+import json
+import requests
 
 app = Flask(__name__)
 
 @app.route('/')
-def index():
-    return render_template('index.html')
+def consenso():
+    return render_template('consenso.html')  # Pagina iniziale con consenso informato
+
+@app.route('/survey')
+def survey():
+    return render_template('index.html')  # Pagina con il sondaggio
 
 @app.route('/submit', methods=['POST'])
 def submit():
     data = request.json
-
-    SHEET_BEST_URL = "https://api.sheetbest.com/sheets/0ae1a0d6-e98b-421a-81d0-324450492f9c"
+    SHEET_BEST_URL = "https://sheet.best/api/sheets/INSERISCI-LINK-QUI"  # Sostituisci con il tuo link
 
     for riga in data:
         res = requests.post(SHEET_BEST_URL, json=riga)
