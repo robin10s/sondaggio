@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="it">
 <head>
-  <meta charset="UTF-8">
+  <meta charset="UTF-8" />
   <title>Sondaggio Cibo-Musica</title>
   <style>
     body { font-family: Arial, sans-serif; padding: 20px; max-width: 800px; margin: auto; }
@@ -24,26 +24,35 @@
       try {
         const res = await fetch("/static/domande.json");
         const allQuestions = await res.json();
-        const filtered = allQuestions.filter(q => {
-          const n = parseInt(q.image.match(/\d+/));
-          return n >= 2 && n <= 896;
-        });
-        const questions = filtered.sort(() => 0.5 - Math.random()).slice(0, 10);
+
+        const filtered = allQuestions.filter(q =>
+          q.id >= 2 &&
+          q.id <= 896 &&
+          q.image &&
+          q.audio &&
+          q.audio.length >= 3
+        );
+
+        const selected = filtered.sort(() => 0.5 - Math.random()).slice(0, 10);
         const container = document.getElementById("quiz-container");
 
-        questions.forEach((q, index) => {
+        selected.forEach((q, index) => {
           const block = document.createElement("div");
           block.className = "question-block" + (index === 0 ? " visible" : "");
 
           block.innerHTML = `
             <h2>Domanda ${index + 1} di 10</h2>
-            <p><strong>Osserva l'immagine dell'alimento e ascolta i 4 brani successivi. Se due brani sono uguali e li consideri coerenti, selezionali entrambi.</strong></p>
+            <p><strong>Osserva l'immagine dell'alimento e ascolta i 4 brani successivi, successivamente rispondi alle domande sottostanti.</strong></p>
             <img src="/static/${q.image}" alt="Alimento"><br>
-            ${q.audio.map((a, i) => `<audio controls src="/static/${a.src}"></audio>`).join('')}
+            ${q.audio.map((a, i) => `<audio controls src="/static/${a.src}"></audio>`).join("")}
             <form>
-              <p>Quali audio associ meglio a questo alimento?</p>
-              ${q.audio.map((a, i) => `<label><input type="checkbox" name="audio" value="${i + 1}"> Audio ${i + 1}</label><br>`).join('')}
-              <p>Quale emozione associ a immagine e audio selezionati?</p>
+              <p>Quale dei brani ti sembra più affine al cibo mostrato?</p>
+              <label><input type="checkbox" name="audio_affine" value="1" required> Audio 1</label><br>
+              <label><input type="checkbox" name="audio_affine" value="2"> Audio 2</label><br>
+              <label><input type="checkbox" name="audio_affine" value="3"> Audio 3</label><br>
+              <label><input type="checkbox" name="audio_affine" value="4"> Audio 4</label><br>
+
+              <p>Quale emozione associ a entrambi gli stimoli (immagine + audio selezionato)?</p>
               <select name="emozione" required>
                 <option value="">Seleziona</option>
                 <option>Gioia</option>
@@ -55,7 +64,8 @@
                 <option>Serenità</option>
                 <option>Frustrazione</option>
               </select><br><br>
-              <button type="submit" class="btn">${index < 9 ? "Avanti" : "Domande finali"}</button>
+
+              <button type="submit" class="btn">${index < 9 ? "Avanti" : "Dati finali"}</button>
             </form>
           `;
 
@@ -63,85 +73,86 @@
             e.preventDefault();
             const formData = new FormData(e.target);
             const data = Object.fromEntries(formData.entries());
-            data.audio = formData.getAll("audio");
             data.id_domanda = q.id;
+            data.image = q.image;
+            data.audio = q.audio.map(a => a.src);
             responses.push(data);
+
             block.classList.remove("visible");
             if (index < 9) {
               container.children[index + 1].classList.add("visible");
             } else {
-              mostraDomandeFinali(container);
+              mostraDomandeFinali();
             }
           });
 
           container.appendChild(block);
         });
       } catch (e) {
-        console.error("❌ Errore durante il caricamento delle domande:", e);
+        console.error("❌ Errore nel caricamento delle domande:", e);
         document.body.innerHTML = "<h2>Errore durante il caricamento del sondaggio.</h2>";
       }
     }
 
-    function mostraDomandeFinali(container) {
+    function mostraDomandeFinali() {
+      const container = document.getElementById("quiz-container");
       const finalBlock = document.createElement("div");
       finalBlock.className = "question-block visible";
-
       finalBlock.innerHTML = `
         <h2>Domande finali</h2>
         <form>
           <p>Età:</p>
           <input type="number" name="eta" min="18" required><br>
+
           <p>Genere:</p>
           <select name="genere" required>
             <option value="">Seleziona</option>
             <option>Maschio</option>
             <option>Femmina</option>
             <option>Altro</option>
+            <option>Preferisco non specificare</option>
           </select><br>
-          <p>Hai esperienza o interesse nella musica?</p>
-          <select name="musica" required>
+
+          <p>Hai esperienze o interesse per il mondo della musica?</p>
+          <select name="musica">
             <option value="">Seleziona</option>
-            <option>Nessuna esperienza né interesse</option>
-            <option>Interesse personale (ascoltatore, appassionato)</option>
-            <option>Formazione musicale amatoriale</option>
-            <option>Professionista del settore musicale</option>
+            <option>Appassionato/a</option>
+            <option>Professionista</option>
+            <option>Ascoltatore occasionale</option>
+            <option>Nessuna esperienza</option>
           </select><br>
-          <p>Quanto ti senti esperta/o in cucina?</p>
-          <select name="cucina" required>
+
+          <p>Hai un legame con la cucina?</p>
+          <select name="cucina">
             <option value="">Seleziona</option>
-            <option>Base</option>
-            <option>Intermedio</option>
-            <option>Avanzato</option>
+            <option>Professionista del settore</option>
+            <option>Appassionato/a</option>
+            <option>Non particolarmente interessato</option>
           </select><br>
-          <p>Con quale dispositivo hai ascoltato i brani?</p>
-          <select name="dispositivo" required>
+
+          <p>Con quale dispositivo acustico hai ascoltato i brani?</p>
+          <select name="dispositivo">
             <option value="">Seleziona</option>
-            <option>PC</option>
-            <option>Smartphone</option>
-            <option>Tablet</option>
             <option>Cuffie</option>
-            <option>Altoparlanti esterni</option>
+            <option>Altoparlanti</option>
+            <option>Computer portatile</option>
+            <option>Smartphone</option>
           </select><br><br>
-          <button type="submit" class="btn">Invia</button>
+
+          <button type="submit" class="btn">Invia sondaggio</button>
         </form>
       `;
 
       finalBlock.querySelector("form").addEventListener("submit", async (e) => {
         e.preventDefault();
         const formData = new FormData(e.target);
-        const finalData = Object.fromEntries(formData.entries());
-        const dataToSend = responses.map(r => ({ ...r, ...finalData }));
+        const finalAnswers = Object.fromEntries(formData.entries());
+        const dataToSend = responses.map(r => ({ ...r, ...finalAnswers }));
 
-        const response = await fetch("https://api.sheetbest.com/sheets/17c1eaf5-d430-4787-beca-d0d067c61950",{
+        const response = await fetch("https://api.sheetbest.com/sheets/0ae1a0d6-e98b-421a-81d0-324450492f9c", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          for (const responseData of dataToSend) {
-            await fetch("https://api.sheetbest.com/sheets/0ae1a0d6-e98b-421a-81d0-324450492f9c", {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify(responseData)
-            });
-          }
+          body: JSON.stringify(dataToSend)
         });
 
         document.body.innerHTML = response.ok
