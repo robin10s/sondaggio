@@ -2,13 +2,13 @@
 <html lang="it">
 <head>
   <meta charset="UTF-8" />
-  <title>Sondaggio Cibo-Musica</title>
+  <title>Sondaggio Cibo e Musica</title>
   <style>
     body { font-family: Arial, sans-serif; padding: 20px; max-width: 800px; margin: auto; }
-    img { width: 100%; max-width: 400px; display: block; margin-bottom: 10px; }
+    img { width: 100%; max-width: 400px; }
     .question-block { display: none; margin-bottom: 30px; }
     .visible { display: block; }
-    audio { margin: 5px 0; display: block; width: 100%; }
+    audio { display: block; margin-top: 10px; }
     .btn { margin-top: 20px; padding: 10px 20px; font-size: 16px; }
     form p { font-weight: bold; margin-top: 10px; }
   </style>
@@ -18,158 +18,156 @@
   <div id="quiz-container"></div>
 
   <script>
-    let responses = [];
+    const endpoint = "https://script.google.com/macros/s/AKfycbztZkfAi04FPsqWQYez5yY9akrcERVK3MDDvp7GGsIk-Vs8WNyVz5t05gQ07Rcxtkog/exec";
+    const responses = [];
 
     async function loadQuestions() {
-      try {
-        const res = await fetch("/static/domande.json");
-        const allQuestions = await res.json();
+      const res = await fetch("/static/domande.json");
+      const allQuestions = await res.json();
 
-        // Seleziona 10 random tra id da 2 a 896
-        const filtered = allQuestions.filter(q => {
-          const id = parseInt(q.id);
-          return id >= 2 && id <= 896 && q.audio && q.audio.length >= 4;
+      // Prendi 10 domande casuali tra id 2 e 896
+      const filtered = allQuestions.filter(q => {
+        const id = parseInt(q.image.match(/\d+/)?.[0]);
+        return id >= 2 && id <= 896;
+      });
+
+      const questions = filtered.sort(() => 0.5 - Math.random()).slice(0, 10);
+      const container = document.getElementById("quiz-container");
+
+      questions.forEach((q, index) => {
+        const block = document.createElement("div");
+        block.className = "question-block" + (index === 0 ? " visible" : "");
+
+        block.innerHTML = `
+          <h2>Domanda ${index + 1} di 10</h2>
+          <p><strong>Osserva l'immagine dell'alimento e ascolta i 4 brani successivi, poi rispondi:</strong></p>
+          <img src="/static/${q.image}" alt="Cibo">
+          ${q.audio.map((a, i) => `<audio src="/static/${a.src}" controls></audio>`).join("")}
+          <form>
+            <p>Quale dei seguenti audio ti sembra più affine all'immagine? (Puoi selezionare anche più di uno)</p>
+            ${q.audio.map((a, i) => `
+              <label>
+                <input type="checkbox" name="audio" value="${i + 1}"> Audio ${i + 1}
+              </label><br>
+            `).join("")}
+
+            <p>Quale emozione ti ha suscitato la combinazione immagine-audio selezionata?</p>
+            <select name="emozione" required>
+              <option value="">Seleziona</option>
+              <option>Gioia</option>
+              <option>Tristezza</option>
+              <option>Rabbia</option>
+              <option>Paura</option>
+              <option>Sorpresa</option>
+              <option>Disgusto</option>
+              <option>Serenità</option>
+              <option>Frustrazione</option>
+            </select><br><br>
+
+            <button type="submit" class="btn">${index < 9 ? "Avanti" : "Completa"}</button>
+          </form>
+        `;
+
+        block.querySelector("form").addEventListener("submit", e => {
+          e.preventDefault();
+          const formData = new FormData(e.target);
+          const audioSelections = formData.getAll("audio");
+
+          if (audioSelections.length === 0) {
+            alert("Seleziona almeno un audio per continuare.");
+            return;
+          }
+
+          const risposta = {
+            id_domanda: q.id,
+            audio_selezionati: audioSelections.join(", "),
+            emozione: formData.get("emozione")
+          };
+
+          responses.push(risposta);
+          block.classList.remove("visible");
+
+          if (index < 9) {
+            container.children[index + 1].classList.add("visible");
+          } else {
+            mostraDomandeFinali(container);
+          }
         });
 
-        const questions = filtered.sort(() => 0.5 - Math.random()).slice(0, 10);
-        const container = document.getElementById("quiz-container");
-
-        questions.forEach((q, index) => {
-          const block = document.createElement("div");
-          block.className = "question-block" + (index === 0 ? " visible" : "");
-
-          block.innerHTML = `
-            <h2>Domanda ${index + 1} di 10</h2>
-            <p><strong>Osserva l'immagine dell'alimento e ascolta i 4 brani successivi. Poi rispondi:</strong></p>
-            <img src="/static/${q.image}" alt="Alimento"><br>
-            ${q.audio.map((a, i) => `<audio controls src="/static/${a.src}"></audio>`).join('')}
-            <form>
-              <p>Quale/i audio ti sembra/no più affine/i al cibo mostrato? (Se due audio sono uguali, selezionali entrambi)</p>
-              ${q.audio.map((a, i) => `<label><input type="checkbox" name="audio_affine" value="${i+1}"> Audio ${i+1}</label><br>`).join('')}
-
-              <p>Quale emozione hai provato guardando l'immagine e ascoltando il brano selezionato?</p>
-              <select name="emozione" required>
-                <option value="">Seleziona</option>
-                <option>Gioia</option>
-                <option>Tristezza</option>
-                <option>Rabbia</option>
-                <option>Paura</option>
-                <option>Sorpresa</option>
-                <option>Disgusto</option>
-                <option>Serenità</option>
-                <option>Frustrazione</option>
-              </select><br><br>
-
-              <button type="submit" class="btn">${index < 9 ? "Avanti" : "Procedi alle generalità"}</button>
-            </form>
-          `;
-
-          block.querySelector("form").addEventListener("submit", e => {
-            e.preventDefault();
-            const form = e.target;
-            const audioSelected = [...form.querySelectorAll('input[name="audio_affine"]:checked')];
-
-            if (audioSelected.length === 0) {
-              alert("Seleziona almeno un audio affine prima di continuare.");
-              return;
-            }
-
-            const formData = new FormData(form);
-            const data = Object.fromEntries(formData.entries());
-            data.audio_affine = audioSelected.map(cb => cb.value).join(",");
-            data.id_domanda = q.id;
-            data.image = q.image;
-            responses.push(data);
-
-            block.classList.remove("visible");
-            if (index < 9) {
-              container.children[index + 1].classList.add("visible");
-            } else {
-              mostraDomandeFinali();
-            }
-          });
-
-          container.appendChild(block);
-        });
-
-      } catch (e) {
-        console.error("Errore nel caricamento delle domande:", e);
-        document.body.innerHTML = "<h2>Errore durante il caricamento del sondaggio.</h2>";
-      }
+        container.appendChild(block);
+      });
     }
 
-    function mostraDomandeFinali() {
-      const finalBlock = document.createElement("div");
-      finalBlock.className = "question-block visible";
-
-      finalBlock.innerHTML = `
-        <h2>Ultime domande</h2>
-        <form>
+    function mostraDomandeFinali(container) {
+      const finale = document.createElement("div");
+      finale.className = "question-block visible";
+      finale.innerHTML = `
+        <h2>Dati finali</h2>
+        <form id="final-form">
           <p>Età:</p>
           <input type="number" name="eta" min="18" required><br>
 
           <p>Genere:</p>
           <select name="genere" required>
             <option value="">Seleziona</option>
-            <option value="f">Femminile</option>
-            <option value="m">Maschile</option>
-            <option value="altro">Altro</option>
-            <option value="nsp">Preferisco non specificare</option>
+            <option>Maschio</option>
+            <option>Femmina</option>
+            <option>Altro</option>
+            <option>Preferisco non specificare</option>
           </select><br>
 
-          <p>Hai esperienza nel mondo della musica?</p>
+          <p>Esperienza con la musica:</p>
           <select name="musica" required>
             <option value="">Seleziona</option>
-            <option value="nessuna">Nessuna</option>
-            <option value="appassionato">Appassionato</option>
-            <option value="studente">Studente</option>
-            <option value="professionista">Professionista</option>
+            <option>Professionista</option>
+            <option>Appassionato/a</option>
+            <option>Ascoltatore occasionale</option>
+            <option>Nessun interesse</option>
           </select><br>
 
-          <p>Hai esperienza nel mondo della cucina?</p>
+          <p>Hai esperienze o interesse nella cucina?</p>
           <select name="cucina" required>
             <option value="">Seleziona</option>
-            <option value="nessuna">Nessuna</option>
-            <option value="appassionato">Appassionato</option>
-            <option value="studente">Studente</option>
-            <option value="professionista">Professionista</option>
+            <option>Lavoro nel settore</option>
+            <option>Appassionato/a</option>
+            <option>Non particolarmente interessato</option>
           </select><br>
 
-          <p>Con quale dispositivo hai ascoltato i brani musicali?</p>
+          <p>Con quale dispositivo hai ascoltato i brani?</p>
           <select name="dispositivo" required>
             <option value="">Seleziona</option>
-            <option>Smartphone senza cuffie</option>
-            <option>Smartphone con cuffie</option>
-            <option>PC portatile</option>
-            <option>PC fisso con casse</option>
-            <option>Tablet</option>
+            <option>Cuffie</option>
+            <option>Altoparlanti del computer</option>
+            <option>Altoparlanti esterni</option>
+            <option>Telefono</option>
           </select><br><br>
 
-          <button type="submit" class="btn">Invia risposte</button>
+          <button type="submit" class="btn">Invia le risposte</button>
         </form>
       `;
 
-      finalBlock.querySelector("form").addEventListener("submit", async e => {
+      finale.querySelector("#final-form").addEventListener("submit", async (e) => {
         e.preventDefault();
-        const formData = new FormData(e.target);
-        const finalAnswers = Object.fromEntries(formData.entries());
-        const dataToSend = responses.map(r => ({ ...r, ...finalAnswers }));
+        const datiFinali = Object.fromEntries(new FormData(e.target));
+        const dataToSend = responses.map(r => ({ ...r, ...datiFinali }));
 
-        const response = await fetch("https://api.sheetbest.com/sheets/17c1eaf5-d430-4787-beca-d0d067c61950", {
+        const response = await fetch(endpoint, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(dataToSend)
         });
 
         document.body.innerHTML = response.ok
-          ? "<h2>Grazie per aver completato il sondaggio! Le tue risposte sono state ricevute correttamente. Se ti va, condividi questo sondaggio con altre persone interessate.</h2>"
-          : "<h2>Si è verificato un errore durante l'invio delle risposte.</h2>";
+          ? "<h2>✅ Grazie per aver completato il sondaggio! Le tue risposte sono state registrate. Se ti fa piacere, condividilo con altre persone interessate!</h2>"
+          : "<h2>⚠️ Errore durante l'invio delle risposte. Riprova più tardi.</h2>";
       });
 
-      document.getElementById("quiz-container").appendChild(finalBlock);
+      container.appendChild(finale);
     }
 
-    window.addEventListener("DOMContentLoaded", loadQuestions);
+    window.addEventListener("DOMContentLoaded", () => {
+      loadQuestions();
+    });
   </script>
 </body>
 </html>
