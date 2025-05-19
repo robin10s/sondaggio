@@ -60,7 +60,7 @@ function creaAudioPlayer(audioData) {
     const responses = [];
 
     async function loadQuestions() {
-      const res = await fetch("/api/domande.json");
+      const res = await fetch("/api/domande");
       const allQuestions = await res.json();
 
       // Prendi 10 domande casuali tra id 2 e 896
