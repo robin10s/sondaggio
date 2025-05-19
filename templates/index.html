@@ -12,6 +12,44 @@
     .btn { margin-top: 20px; padding: 10px 20px; font-size: 16px; }
     form p { font-weight: bold; margin-top: 10px; }
   </style>
+
+<script>
+function creaAudioPlayer(audioData) {
+  const container = document.createElement('div');
+  container.className = 'audio-set';
+
+  audioData.forEach((clip, index) => {
+    if (!clip.src || clip.src === "" || clip.src === "0") return;
+
+    const wrapper = document.createElement('div');
+    wrapper.className = 'audio-wrapper';
+
+    const label = document.createElement('p');
+    label.innerText = `Audio ${index + 1} (${clip.origine || "n/a"})`;
+
+    const player = document.createElement('audio');
+    player.controls = true;
+    player.src = clip.src;
+
+    // Se è dinamico e ha start, gestisci via evento
+    if (clip.start !== undefined) {
+      player.addEventListener('play', () => {
+        player.currentTime = clip.start;
+        setTimeout(() => {
+          player.pause();
+        }, 10000); // 10 secondi dopo
+      });
+    }
+
+    wrapper.appendChild(label);
+    wrapper.appendChild(player);
+    container.appendChild(wrapper);
+  });
+
+  return container;
+}
+</script>
+
 </head>
 <body>
   <h1>Sondaggio: Cibo e Musica</h1>
