@@ -13,8 +13,16 @@ with open("domande.json", "r", encoding="utf-8") as f:
     domande = json.load(f)
 
 @app.route("/")
-def index():
+def consenso():
+    return render_template("consenso.html")
+
+@app.route("/quiz")
+def quiz():
     return render_template("index.html")
+
+@app.route("/fine")
+def fine():
+    return render_template("finale.html")
 
 @app.route("/api/domande")
 def get_domande():
