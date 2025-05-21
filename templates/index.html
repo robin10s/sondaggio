@@ -33,12 +33,23 @@ function creaAudioPlayer(audioData) {
 
     // Se è dinamico e ha start, gestisci via evento
     if (clip.start !== undefined) {
-      player.addEventListener('play', () => {
-        player.currentTime = clip.start;
-        setTimeout(() => {
-          player.pause();
-        }, 10000); // 10 secondi dopo
+      let dynamicStart = clip.start;
+      let dynamicEnd = clip.start + 10;
+
+      player.addEventListener('loadedmetadata', () => {
+        player.currentTime = dynamicStart;
       });
+
+      player.addEventListener('timeupdate', () => {
+        if (player.currentTime >= dynamicEnd) {
+          player.pause();
+        }
+      });
+
+  // Simula una durata fissa di 10s nel player
+     Object.defineProperty(player, 'duration', {
+       get: () => 10
+     });
     }
 
     wrapper.appendChild(label);
