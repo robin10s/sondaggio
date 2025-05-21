@@ -78,7 +78,7 @@ function creaAudioPlayer(audioData) {
 
         block.innerHTML = `
           <h2>Domanda ${index + 1} di 10</h2>
-          <p><strong>Osserva l'immagine dell'alimento e ascolta i 4 brani successivi, poi rispondi:</strong></p>
+          <p><strong>Osserva l'immagine dell'alimento e ascolta i 6 brani successivi, poi rispondi:</strong></p>
           <img src="/static/${q.image}" alt="Cibo">
           ${q.audio.map((a, i) => `<audio src="/static/${a.src}" controls></audio>`).join("")}
           <form>
@@ -118,7 +118,8 @@ function creaAudioPlayer(audioData) {
 
           const risposta = {
             id_domanda: q.id,
-            audio_selezionati: audioSelections.join(", "),
+            audio_selezionati: audioSelections.map (i => 'Audio ${i}').join(","),
+            brani_selezionati: audioSelection.map (i => q.audio[i-1]?.src || "N/A").join(", "),
             emozione: formData.get("emozione")
           };
 
@@ -157,10 +158,9 @@ function creaAudioPlayer(audioData) {
           <p>Esperienza con la musica:</p>
           <select name="musica" required>
             <option value="">Seleziona</option>
-            <option>Professionista</option>
+            <option>Lavoro nel settorea</option>
             <option>Appassionato/a</option>
-            <option>Ascoltatore occasionale</option>
-            <option>Nessun interesse</option>
+            <option>Non particolarmente interessato</option>
           </select><br>
 
           <p>Hai esperienze o interesse nella cucina?</p>
