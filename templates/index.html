@@ -126,7 +126,6 @@
           }
 
           const risposta = {
-            id_domanda: q.id,
             immagine_id: parseInt(q.image.match(/\d+/)?.[0]),
             audio_selezionati: selected.map(i => `Audio ${i}`).join(", "),
             brani_selezionati: selected.map(i => q.audio[i - 1]?.src || "N/A").join(", "),
