@@ -13,54 +13,50 @@
     form p { font-weight: bold; margin-top: 10px; }
   </style>
 
-<script>
-function creaAudioPlayer(audioData) {
-  const container = document.createElement('div');
-  container.className = 'audio-set';
+  <script>
+    function creaAudioPlayer(audioData) {
+      const container = document.createElement('div');
+      container.className = 'audio-set';
 
-  audioData.forEach((clip, index) => {
-    if (!clip.src || clip.src === "" || clip.src === "0") return;
+      audioData.forEach((clip, index) => {
+        if (!clip.src || clip.src === "" || clip.src === "0") return;
 
-    const wrapper = document.createElement('div');
-    wrapper.className = 'audio-wrapper';
+        const wrapper = document.createElement('div');
+        wrapper.className = 'audio-wrapper';
 
-    const label = document.createElement('p');
-    label.innerText = `Audio ${index + 1} (${clip.origine || "n/a"})`;
+        const label = document.createElement('p');
+        label.innerText = `Audio ${index + 1} (${clip.origine || "n/a"})`;
 
-    const player = document.createElement('audio');
-    player.controls = true;
-    player.src = clip.src;
+        const player = document.createElement('audio');
+        player.controls = true;
+        player.src = `/static/${clip.src}`;
 
-    // Se è dinamico e ha start, gestisci via evento
-    if (clip.start !== undefined) {
-      let dynamicStart = clip.start;
-      let dynamicEnd = clip.start + 10;
+        if (clip.start !== undefined) {
+          let dynamicStart = clip.start;
+          let dynamicEnd = clip.start + 10;
 
-      player.addEventListener('loadedmetadata', () => {
-        player.currentTime = dynamicStart;
-      });
+          player.addEventListener('loadedmetadata', () => {
+            player.currentTime = dynamicStart;
+            Object.defineProperty(player, 'duration', {
+              get: () => 10
+            });
+          });
 
-      player.addEventListener('timeupdate', () => {
-        if (player.currentTime >= dynamicEnd) {
-          player.pause();
+          player.addEventListener('timeupdate', () => {
+            if (player.currentTime >= dynamicEnd) {
+              player.pause();
+            }
+          });
         }
+
+        wrapper.appendChild(label);
+        wrapper.appendChild(player);
+        container.appendChild(wrapper);
       });
 
-  // Simula una durata fissa di 10s nel player
-     Object.defineProperty(player, 'duration', {
-       get: () => 10
-     });
+      return container;
     }
-
-    wrapper.appendChild(label);
-    wrapper.appendChild(player);
-    container.appendChild(wrapper);
-  });
-
-  return container;
-}
-</script>
-
+  </script>
 </head>
 <body>
   <h1>Sondaggio: Cibo e Musica</h1>
@@ -74,7 +70,6 @@ function creaAudioPlayer(audioData) {
       const res = await fetch("/api/domande");
       const allQuestions = await res.json();
 
-      // Prendi 10 domande casuali tra id 2 e 896
       const filtered = allQuestions.filter(q => {
         const id = parseInt(q.image.match(/\d+/)?.[0]);
         return id >= 2 && id <= 896;
@@ -91,7 +86,7 @@ function creaAudioPlayer(audioData) {
           <h2>Domanda ${index + 1} di 10</h2>
           <p><strong>Osserva l'immagine dell'alimento e ascolta i 6 brani successivi, poi rispondi:</strong></p>
           <img src="/static/${q.image}" alt="Cibo">
-          ${q.audio.map((a, i) => `<audio src="/static/${a.src}" controls></audio>`).join("")}
+          <div class="audio-container"></div>
           <form>
             <p>Quale dei seguenti audio ti sembra più affine all'immagine? (Puoi selezionare anche più di uno)</p>
             ${q.audio.map((a, i) => `
@@ -117,6 +112,10 @@ function creaAudioPlayer(audioData) {
           </form>
         `;
 
+        const audioContainer = block.querySelector(".audio-container");
+        const players = creaAudioPlayer(q.audio);
+        audioContainer.appendChild(players);
+
         block.querySelector("form").addEventListener("submit", e => {
           e.preventDefault();
           const formData = new FormData(e.target);
@@ -129,8 +128,8 @@ function creaAudioPlayer(audioData) {
 
           const risposta = {
             id_domanda: q.id,
-            audio_selezionati: audioSelections.map (i => 'Audio ${i}').join(","),
-            brani_selezionati: audioSelection.map (i => q.audio[i-1]?.src || "N/A").join(", "),
+            audio_selezionati: audioSelections.map(i => `Audio ${i}`).join(", "),
+            brani_selezionati: audioSelections.map(i => q.audio[i - 1]?.src || "N/A").join(", "),
             emozione: formData.get("emozione")
           };
 
@@ -169,7 +168,7 @@ function creaAudioPlayer(audioData) {
           <p>Esperienza con la musica:</p>
           <select name="musica" required>
             <option value="">Seleziona</option>
-            <option>Lavoro nel settorea</option>
+            <option>Lavoro nel settore</option>
             <option>Appassionato/a</option>
             <option>Non particolarmente interessato</option>
           </select><br>
@@ -207,7 +206,7 @@ function creaAudioPlayer(audioData) {
         });
 
         document.body.innerHTML = response.ok
-          ? "<h2>✅ Grazie per aver completato il sondaggio! Le tue risposte sono state registrate. Se ti fa piacere, condividilo con altre persone interessate!</h2>"
+          ? "<h2>✅ Grazie per aver completato il sondaggio! Le tue risposte sono state registrate.</h2>"
           : "<h2>⚠️ Errore durante l'invio delle risposte. Riprova più tardi.</h2>";
       });
 
