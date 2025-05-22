@@ -12,51 +12,6 @@
     .btn { margin-top: 20px; padding: 10px 20px; font-size: 16px; }
     form p { font-weight: bold; margin-top: 10px; }
   </style>
-
-  <script>
-    function creaAudioPlayer(audioData) {
-      const container = document.createElement('div');
-      container.className = 'audio-set';
-
-      audioData.forEach((clip, index) => {
-        if (!clip.src || clip.src === "" || clip.src === "0") return;
-
-        const wrapper = document.createElement('div');
-        wrapper.className = 'audio-wrapper';
-
-        const label = document.createElement('p');
-        label.innerText = `Audio ${index + 1} (${clip.origine || "n/a"})`;
-
-        const player = document.createElement('audio');
-        player.controls = true;
-        player.src = `/static/${clip.src}`;
-
-        if (clip.start !== undefined) {
-          let dynamicStart = clip.start;
-          let dynamicEnd = clip.start + 10;
-
-          player.addEventListener('loadedmetadata', () => {
-            player.currentTime = dynamicStart;
-            Object.defineProperty(player, 'duration', {
-              get: () => 10
-            });
-          });
-
-          player.addEventListener('timeupdate', () => {
-            if (player.currentTime >= dynamicEnd) {
-              player.pause();
-            }
-          });
-        }
-
-        wrapper.appendChild(label);
-        wrapper.appendChild(player);
-        container.appendChild(wrapper);
-      });
-
-      return container;
-    }
-  </script>
 </head>
 <body>
   <h1>Sondaggio: Cibo e Musica</h1>
@@ -68,33 +23,32 @@
 
     async function loadQuestions() {
       const res = await fetch("/api/domande");
-      const allQuestions = await res.json();
-
-      const filtered = allQuestions.filter(q => {
-        const id = parseInt(q.image.match(/\d+/)?.[0]);
-        return id >= 2 && id <= 896;
-      });
-
-      const questions = filtered.sort(() => 0.5 - Math.random()).slice(0, 10);
+      const questions = await res.json();
       const container = document.getElementById("quiz-container");
 
       questions.forEach((q, index) => {
+        if (!q.audio || q.audio.length !== 6) return;
+
         const block = document.createElement("div");
         block.className = "question-block" + (index === 0 ? " visible" : "");
 
         block.innerHTML = `
-          <h2>Domanda ${index + 1} di 10</h2>
+          <h2>Domanda ${index + 1} di ${questions.length}</h2>
           <p><strong>Osserva l'immagine dell'alimento e ascolta i 6 brani successivi, poi rispondi:</strong></p>
           <img src="/static/${q.image}" alt="Cibo">
-          <div class="audio-container"></div>
-          <form>
-            <p>Quale dei seguenti audio ti sembra più affine all'immagine? (Puoi selezionare anche più di uno)</p>
-            ${q.audio.map((a, i) => `
+          ${q.audio.map((a, i) => {
+            const src = a.src.includes("audio_dinamici_")
+              ? `/static/${a.src}` // ultimi 2 audio dinamici
+              : `/static/${a.src}`; // primi 4 normali
+            return `
+              <p><strong>Audio ${i + 1} (${a.origine || "n/a"})</strong></p>
+              <audio src="${src}" controls></audio>
               <label>
-                <input type="checkbox" name="audio" value="${i + 1}"> Audio ${i + 1}
+                <input type="checkbox" name="audio" value="${i + 1}"> Seleziona
               </label><br>
-            `).join("")}
-
+            `;
+          }).join("")}
+          <form>
             <p>Quale emozione ti ha suscitato la combinazione immagine-audio selezionata?</p>
             <select name="emozione" required>
               <option value="">Seleziona</option>
@@ -107,19 +61,15 @@
               <option>Serenità</option>
               <option>Frustrazione</option>
             </select><br><br>
-
-            <button type="submit" class="btn">${index < 9 ? "Avanti" : "Completa"}</button>
+            <button type="submit" class="btn">${index < questions.length - 1 ? "Avanti" : "Completa"}</button>
           </form>
         `;
 
-        const audioContainer = block.querySelector(".audio-container");
-        const players = creaAudioPlayer(q.audio);
-        audioContainer.appendChild(players);
-
-        block.querySelector("form").addEventListener("submit", e => {
+        const form = block.querySelector("form");
+        form.addEventListener("submit", async e => {
           e.preventDefault();
           const formData = new FormData(e.target);
-          const audioSelections = formData.getAll("audio");
+          const audioSelections = Array.from(block.querySelectorAll("input[name='audio']:checked")).map(cb => parseInt(cb.value));
 
           if (audioSelections.length === 0) {
             alert("Seleziona almeno un audio per continuare.");
@@ -128,6 +78,7 @@
 
           const risposta = {
             id_domanda: q.id,
+            immagine_id: parseInt(q.image.match(/\d+/)?.[0]),
             audio_selezionati: audioSelections.map(i => `Audio ${i}`).join(", "),
             brani_selezionati: audioSelections.map(i => q.audio[i - 1]?.src || "N/A").join(", "),
             emozione: formData.get("emozione")
@@ -136,7 +87,7 @@
           responses.push(risposta);
           block.classList.remove("visible");
 
-          if (index < 9) {
+          if (index < questions.length - 1) {
             container.children[index + 1].classList.add("visible");
           } else {
             mostraDomandeFinali(container);
@@ -213,9 +164,7 @@
       container.appendChild(finale);
     }
 
-    window.addEventListener("DOMContentLoaded", () => {
-      loadQuestions();
-    });
+    window.addEventListener("DOMContentLoaded", loadQuestions);
   </script>
 </body>
 </html>
