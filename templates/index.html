@@ -4,13 +4,47 @@
   <meta charset="UTF-8" />
   <title>Sondaggio Cibo e Musica</title>
   <style>
-    body { font-family: Arial, sans-serif; padding: 20px; max-width: 800px; margin: auto; }
-    img { width: 100%; max-width: 400px; }
-    .question-block { display: none; margin-bottom: 30px; }
-    .visible { display: block; }
-    audio { display: block; margin-top: 10px; }
-    .btn { margin-top: 20px; padding: 10px 20px; font-size: 16px; }
-    form p { font-weight: bold; margin-top: 10px; }
+    body {
+      font-family: sans-serif;
+      padding: 20px;
+      max-width: 800px;
+      margin: auto;
+      background: #f9f9f9;
+    }
+    h1 {
+      text-align: center;
+    }
+    img {
+      width: 100%;
+      max-width: 400px;
+      display: block;
+      margin: 10px auto;
+    }
+    .question-block {
+      display: none;
+      margin-bottom: 40px;
+      background: #fff;
+      padding: 20px;
+      border-radius: 10px;
+      box-shadow: 0 0 10px #ccc;
+    }
+    .visible {
+      display: block;
+    }
+    audio {
+      display: block;
+      margin: 10px 0;
+      width: 100%;
+    }
+    .btn {
+      margin-top: 20px;
+      padding: 10px 20px;
+      font-size: 16px;
+    }
+    label {
+      display: block;
+      margin-bottom: 10px;
+    }
   </style>
 </head>
 <body>
@@ -23,55 +57,70 @@
 
     async function loadQuestions() {
       const res = await fetch("/api/domande");
-      const questions = await res.json();
+      let allQuestions = await res.json();
+
+      // Filtro: solo domande con 6 audio
+      allQuestions = allQuestions.filter(q => q.audio?.length === 6);
+
+      // Prendi 10 casuali
+      const questions = allQuestions.sort(() => Math.random() - 0.5).slice(0, 10);
+
       const container = document.getElementById("quiz-container");
 
       questions.forEach((q, index) => {
-        if (!q.audio || q.audio.length !== 6) return;
-
         const block = document.createElement("div");
         block.className = "question-block" + (index === 0 ? " visible" : "");
 
-        block.innerHTML = `
-          <h2>Domanda ${index + 1} di ${questions.length}</h2>
-          <p><strong>Osserva l'immagine dell'alimento e ascolta i 6 brani successivi, poi rispondi:</strong></p>
-          <img src="/static/${q.image}" alt="Cibo">
-          ${q.audio.map((a, i) => {
-            const src = a.src.includes("audio_dinamici_")
-              ? `/static/${a.src}` // ultimi 2 audio dinamici
-              : `/static/${a.src}`; // primi 4 normali
-            return `
-              <p><strong>Audio ${i + 1} (${a.origine || "n/a"})</strong></p>
-              <audio src="${src}" controls></audio>
-              <label>
-                <input type="checkbox" name="audio" value="${i + 1}"> Seleziona
-              </label><br>
-            `;
-          }).join("")}
-          <form>
-            <p>Quale emozione ti ha suscitato la combinazione immagine-audio selezionata?</p>
-            <select name="emozione" required>
-              <option value="">Seleziona</option>
-              <option>Gioia</option>
-              <option>Tristezza</option>
-              <option>Rabbia</option>
-              <option>Paura</option>
-              <option>Sorpresa</option>
-              <option>Disgusto</option>
-              <option>Serenità</option>
-              <option>Frustrazione</option>
-            </select><br><br>
-            <button type="submit" class="btn">${index < questions.length - 1 ? "Avanti" : "Completa"}</button>
-          </form>
-        `;
+        const img = document.createElement("img");
+        img.src = `/static/${q.image}`;
+        block.appendChild(img);
 
-        const form = block.querySelector("form");
+        const form = document.createElement("form");
+        const audioList = document.createElement("div");
+
+        q.audio.forEach((a, i) => {
+          const wrapper = document.createElement("div");
+
+          const audio = document.createElement("audio");
+          audio.controls = true;
+          audio.src = a.src.includes("audio_dinamici_") ? `/static/${a.src}` : `/static/${a.src}`;
+
+          const label = document.createElement("label");
+          label.innerHTML = `<input type="checkbox" name="audio" value="${i + 1}"> Audio ${i + 1}`;
+
+          wrapper.appendChild(audio);
+          wrapper.appendChild(label);
+          audioList.appendChild(wrapper);
+        });
+
+        const emotionLabel = document.createElement("p");
+        emotionLabel.textContent = "Che emozione ti ha suscitato la combinazione immagine/audio?";
+        const select = document.createElement("select");
+        select.name = "emozione";
+        select.required = true;
+        ["", "Gioia", "Tristezza", "Rabbia", "Paura", "Sorpresa", "Disgusto", "Serenità", "Frustrazione"].forEach(op => {
+          const option = document.createElement("option");
+          option.value = op;
+          option.textContent = op === "" ? "Seleziona" : op;
+          select.appendChild(option);
+        });
+
+        const button = document.createElement("button");
+        button.type = "submit";
+        button.className = "btn";
+        button.textContent = index < 9 ? "Avanti" : "Completa";
+
+        form.appendChild(audioList);
+        form.appendChild(emotionLabel);
+        form.appendChild(select);
+        form.appendChild(button);
+
         form.addEventListener("submit", async e => {
           e.preventDefault();
-          const formData = new FormData(e.target);
-          const audioSelections = Array.from(block.querySelectorAll("input[name='audio']:checked")).map(cb => parseInt(cb.value));
+          const formData = new FormData(form);
+          const selected = formData.getAll("audio").map(Number);
 
-          if (audioSelections.length === 0) {
+          if (selected.length === 0) {
             alert("Seleziona almeno un audio per continuare.");
             return;
           }
@@ -79,21 +128,22 @@
           const risposta = {
             id_domanda: q.id,
             immagine_id: parseInt(q.image.match(/\d+/)?.[0]),
-            audio_selezionati: audioSelections.map(i => `Audio ${i}`).join(", "),
-            brani_selezionati: audioSelections.map(i => q.audio[i - 1]?.src || "N/A").join(", "),
+            audio_selezionati: selected.map(i => `Audio ${i}`).join(", "),
+            brani_selezionati: selected.map(i => q.audio[i - 1]?.src || "N/A").join(", "),
             emozione: formData.get("emozione")
           };
 
           responses.push(risposta);
           block.classList.remove("visible");
 
-          if (index < questions.length - 1) {
+          if (index < 9) {
             container.children[index + 1].classList.add("visible");
           } else {
             mostraDomandeFinali(container);
           }
         });
 
+        block.appendChild(form);
         container.appendChild(block);
       });
     }
@@ -157,7 +207,7 @@
         });
 
         document.body.innerHTML = response.ok
-          ? "<h2>✅ Grazie per aver completato il sondaggio! Le tue risposte sono state registrate.</h2>"
+          ? "<h2>✅ Grazie per aver completato il sondaggio!</h2>"
           : "<h2>⚠️ Errore durante l'invio delle risposte. Riprova più tardi.</h2>";
       });
 
@@ -168,3 +218,4 @@
   </script>
 </body>
 </html>
+
