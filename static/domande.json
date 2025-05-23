@@ -1,41 +1,41 @@
 [
   {
-    "immagine": "0001.jpg",
+    "immagine": "static/img/0001.jpg",
     "audio": [
-      "536",
-      "1865",
-      "1465_35s_euclid.mp3",
-      "1789_131s_cosine.mp3"
+      "static/audio/536.mp3",
+      "static/audio/1865.mp3",
+      "static/audio_tagliati/1465_35s_euclid.mp3",
+      "static/audio_tagliati/1789_131s_cosine.mp3"
     ],
     "tipo": "misto"
   },
   {
-    "immagine": "0002.jpg",
+    "immagine": "static/img/0002.jpg",
     "audio": [
-      "1747",
-      "831",
-      "679_38s_euclid.mp3",
-      "431_22s_cosine.mp3"
+      "static/audio/1747.mp3",
+      "static/audio/831.mp3",
+      "static/audio_tagliati/679_38s_euclid.mp3",
+      "static/audio_tagliati/431_22s_cosine.mp3"
     ],
     "tipo": "misto"
   },
   {
-    "immagine": "0003.jpg",
+    "immagine": "static/img/0003.jpg",
     "audio": [
-      "219",
-      "208",
-      "219_23s_euclid.mp3",
-      "221_18s_cosine.mp3"
+      "static/audio/219.mp3",
+      "static/audio/208.mp3",
+      "static/audio_tagliati/219_23s_euclid.mp3",
+      "static/audio_tagliati/221_18s_cosine.mp3"
     ],
     "tipo": "misto"
   },
   {
-    "immagine": "0004.jpg",
+    "immagine": "static/img/0004.jpg",
     "audio": [
-      "48",
-      "23",
-      "48_40s_euclid.mp3",
-      "12_24s_cosine.mp3"
+      "static/audio/48.mp3",
+      "static/audio/23.mp3",
+      "static/audio_tagliati/48_40s_euclid.mp3",
+      "static/audio_tagliati/12_24s_cosine.mp3"
     ],
     "tipo": "misto"
   }
