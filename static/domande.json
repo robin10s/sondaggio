@@ -2,7 +2,7 @@
   {
     "immagine": "0001.jpg",
     "audio": [
-      "0536",
+      "536",
       "1865",
       "1465_35s_euclid.mp3",
       "1789_131s_cosine.mp3"
@@ -13,29 +13,29 @@
     "immagine": "0002.jpg",
     "audio": [
       "1747",
-      "0831",
-      "0679_38s_euclid.mp3",
-      "0431_22s_cosine.mp3"
+      "831",
+      "679_38s_euclid.mp3",
+      "431_22s_cosine.mp3"
     ],
     "tipo": "misto"
   },
   {
     "immagine": "0003.jpg",
     "audio": [
-      "0219",
-      "0208",
-      "0219_23s_euclid.mp3",
-      "0221_18s_cosine.mp3"
+      "219",
+      "208",
+      "219_23s_euclid.mp3",
+      "221_18s_cosine.mp3"
     ],
     "tipo": "misto"
   },
   {
     "immagine": "0004.jpg",
     "audio": [
-      "0048",
-      "0023",
-      "0048_40s_euclid.mp3",
-      "0012_24s_cosine.mp3"
+      "48",
+      "23",
+      "48_40s_euclid.mp3",
+      "12_24s_cosine.mp3"
     ],
     "tipo": "misto"
   }
