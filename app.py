@@ -36,5 +36,6 @@ def serve_audio_static(filename):
 def serve_audio_dinamico(filename):
     return send_from_directory(AUDIO_DINAMICO_DIR, filename)
 
+    
 if __name__ == "__main__":
-    app.run(debug=True)
+    app.run(host="0.0.0.0", port=5000)
