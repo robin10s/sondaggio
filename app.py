@@ -9,7 +9,7 @@ AUDIO_STATIC_DIR = os.path.join(app.root_path, 'static', 'audio')
 AUDIO_DINAMICO_DIR = os.path.join(app.root_path, 'static', 'audio_non_tagliati')
 
 # Carica il file domande_6_audio.json
-with open("domande.json", "r", encoding="utf-8") as f:
+with open("static/domande.json", "r", encoding="utf-8") as f:
     domande = json.load(f)
 
 @app.route("/")
