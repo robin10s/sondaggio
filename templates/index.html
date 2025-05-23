@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="it">
 <head>
-  <meta charset="UTF-8" />
+  <meta charset="UTF-8">
   <title>Sondaggio Cibo e Musica</title>
   <style>
     body {
@@ -31,19 +31,19 @@
     .visible {
       display: block;
     }
+    .audio-inline {
+      display: flex;
+      align-items: center;
+      margin-bottom: 10px;
+    }
     audio {
-      display: block;
-      margin: 10px 0;
-      width: 100%;
+      flex: 1;
+      margin-right: 10px;
     }
     .btn {
       margin-top: 20px;
       padding: 10px 20px;
       font-size: 16px;
-    }
-    label {
-      display: block;
-      margin-bottom: 10px;
     }
   </style>
 </head>
@@ -56,41 +56,64 @@
     const responses = [];
 
     async function loadQuestions() {
-      const res = await fetch("/api/domande");
-      let allQuestions = await res.json();
+      const res = await fetch("/static/domande.json");
+      const fullList = await res.json();
 
-      // Filtro: solo domande con 6 audio
-      allQuestions = allQuestions.filter(q => q.audio?.length === 6);
+      // Raggruppa per immagine
+      const grouped = {};
+      fullList.forEach(item => {
+        if (!grouped[item.immagine]) grouped[item.immagine] = [];
+        grouped[item.immagine].push(item);
+      });
 
-      // Prendi 10 casuali
-      const questions = allQuestions.sort(() => Math.random() - 0.5).slice(0, 10);
+      const immagini = Object.keys(grouped);
+      const randomImages = immagini.sort(() => Math.random() - 0.5).slice(0, 10);
 
       const container = document.getElementById("quiz-container");
 
-      questions.forEach((q, index) => {
+      randomImages.forEach((imgName, index) => {
+        const domande = grouped[imgName];
         const block = document.createElement("div");
         block.className = "question-block" + (index === 0 ? " visible" : "");
 
         const img = document.createElement("img");
-        img.src = `/static/${q.image}`;
+        img.src = `/static/${imgName}`;
         block.appendChild(img);
 
         const form = document.createElement("form");
-        const audioList = document.createElement("div");
 
-        q.audio.forEach((a, i) => {
-          const wrapper = document.createElement("div");
+        domande.forEach((item, i) => {
+            const audioPaths = domande[0].audio;
+            audioPaths.forEach((path, i) => {
+              const audioDiv = document.createElement("div");
+              audioDiv.className = "audio-inline";
+
+              const audio = document.createElement("audio");
+              audio.controls = true;
+              audio.src = `/static/${path}`;
+
+              const label = document.createElement("label");
+              label.innerHTML = `<input type="checkbox" name="audio" value="${i + 1}"> Audio ${i + 1}`;
+
+              audioDiv.appendChild(audio);
+              audioDiv.appendChild(label);
+              form.appendChild(audioDiv);
+            });
+          
+          
+          const audioDiv = document.createElement("div");
+          audioDiv.className = "audio-inline";
 
           const audio = document.createElement("audio");
           audio.controls = true;
-          audio.src = a.src.includes("audio_dinamici_") ? `/static/${a.src}` : `/static/${a.src}`;
+          audio.src = `/static/${audioPath}`;
 
           const label = document.createElement("label");
           label.innerHTML = `<input type="checkbox" name="audio" value="${i + 1}"> Audio ${i + 1}`;
 
-          wrapper.appendChild(audio);
-          wrapper.appendChild(label);
-          audioList.appendChild(wrapper);
+          audioDiv.appendChild(audio);
+          audioDiv.appendChild(label);
+          form.appendChild(audioDiv);
         });
 
         const emotionLabel = document.createElement("p");
@@ -110,7 +133,6 @@
         button.className = "btn";
         button.textContent = index < 9 ? "Avanti" : "Completa";
 
-        form.appendChild(audioList);
         form.appendChild(emotionLabel);
         form.appendChild(select);
         form.appendChild(button);
@@ -126,9 +148,9 @@
           }
 
           const risposta = {
-            immagine_id: parseInt(q.image.match(/\d+/)?.[0]),
+            immagine_id: parseInt(imgName),
             audio_selezionati: selected.map(i => `Audio ${i}`).join(", "),
-            brani_selezionati: selected.map(i => q.audio[i - 1]?.src || "N/A").join(", "),
+            brani_selezionati: selected.map(i => domande[i - 1]?.audio[0] || "N/A").join(", "),
             emozione: formData.get("emozione")
           };
 
@@ -217,4 +239,3 @@
   </script>
 </body>
 </html>
-
