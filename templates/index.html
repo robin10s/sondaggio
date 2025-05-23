@@ -82,19 +82,13 @@
 
         const form = document.createElement("form");
 
-        domande[0].audio.forEach((path, i) => {
+        domande[0].audio.forEach((audioObj, i) => {
           const audioDiv = document.createElement("div");
           audioDiv.className = "audio-inline";
 
           const audio = document.createElement("audio");
           audio.controls = true;
-
-          // Primi due audio statici, altri due tagliati
-          if (i < 2) {
-            audio.src = `/static/audio/${path}`;
-          } else {
-            audio.src = `/static/audio_tagliati/${path}`;
-          }
+          audio.src = `/static/${audioObj.src}`;
 
           const label = document.createElement("label");
           label.innerHTML = `<input type="checkbox" name="audio" value="${i + 1}"> Audio ${i + 1}`;
