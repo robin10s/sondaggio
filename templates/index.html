@@ -82,31 +82,19 @@
 
         const form = document.createElement("form");
 
-        domande.forEach((item, i) => {
-            const audioPaths = domande[0].audio;
-            audioPaths.forEach((path, i) => {
-              const audioDiv = document.createElement("div");
-              audioDiv.className = "audio-inline";
-
-              const audio = document.createElement("audio");
-              audio.controls = true;
-              audio.src = `/static/${path}`;
-
-              const label = document.createElement("label");
-              label.innerHTML = `<input type="checkbox" name="audio" value="${i + 1}"> Audio ${i + 1}`;
-
-              audioDiv.appendChild(audio);
-              audioDiv.appendChild(label);
-              form.appendChild(audioDiv);
-            });
-          
-          
+        domande[0].audio.forEach((path, i) => {
           const audioDiv = document.createElement("div");
           audioDiv.className = "audio-inline";
 
           const audio = document.createElement("audio");
           audio.controls = true;
-          audio.src = `/static/${audioPath}`;
+
+          // Primi due audio statici, altri due tagliati
+          if (i < 2) {
+            audio.src = `/static/audio/${path}`;
+          } else {
+            audio.src = `/static/audio_tagliati/${path}`;
+          }
 
           const label = document.createElement("label");
           label.innerHTML = `<input type="checkbox" name="audio" value="${i + 1}"> Audio ${i + 1}`;
@@ -115,6 +103,8 @@
           audioDiv.appendChild(label);
           form.appendChild(audioDiv);
         });
+          
+          
 
         const emotionLabel = document.createElement("p");
         emotionLabel.textContent = "Che emozione ti ha suscitato la combinazione immagine/audio?";
