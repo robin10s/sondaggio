@@ -88,7 +88,7 @@
 
           const audio = document.createElement("audio");
           audio.controls = true;
-          audio.src = `/static/${audioObj.src}`;
+          audio.src = audioObj.src;
 
           const label = document.createElement("label");
           label.innerHTML = `<input type="checkbox" name="audio" value="${i + 1}"> Audio ${i + 1}`;
@@ -141,7 +141,7 @@
           responses.push(risposta);
           block.classList.remove("visible");
 
-          if (index < 9) {
+          if (index < 9 && container.children[index + 1]) {
             container.children[index + 1].classList.add("visible");
           } else {
             mostraDomandeFinali(container);
