@@ -3,19 +3,19 @@
     "immagine": "img/0001.jpg",
     "audio": [
       {
-        "src": "audio/536.mp3",
+        "src": "/static/audio/536.mp3",
         "origine": "statico"
       },
       {
-        "src": "audio/1865.mp3",
+        "src": "/static/audio/1865.mp3",
         "origine": "statico"
       },
       {
-        "src": "audio_tagliati/1465_35s_euclid.mp3",
+        "src": "/static/audio_tagliati/1465_35s_euclid.mp3",
         "origine": "dinamico"
       },
       {
-        "src": "audio_tagliati/1789_131s_cosine.mp3",
+        "src": "/static/audio_tagliati/1789_131s_cosine.mp3",
         "origine": "dinamico"
       }
     ],
@@ -25,19 +25,19 @@
     "immagine": "img/0002.jpg",
     "audio": [
       {
-        "src": "audio/1747.mp3",
+        "src": "/static/audio/1747.mp3",
         "origine": "statico"
       },
       {
-        "src": "audio/831.mp3",
+        "src": "/static/audio/831.mp3",
         "origine": "statico"
       },
       {
-        "src": "audio_tagliati/679_38s_euclid.mp3",
+        "src": "/static/audio_tagliati/679_38s_euclid.mp3",
         "origine": "dinamico"
       },
       {
-        "src": "audio_tagliati/431_22s_cosine.mp3",
+        "src": "/static/audio_tagliati/431_22s_cosine.mp3",
         "origine": "dinamico"
       }
     ],
@@ -47,19 +47,19 @@
     "immagine": "img/0003.jpg",
     "audio": [
       {
-        "src": "audio/219.mp3",
+        "src": "/static/audio/219.mp3",
         "origine": "statico"
       },
       {
-        "src": "audio/208.mp3",
+        "src": "/static/audio/208.mp3",
         "origine": "statico"
       },
       {
-        "src": "audio_tagliati/219_23s_euclid.mp3",
+        "src": "/static/audio_tagliati/219_23s_euclid.mp3",
         "origine": "dinamico"
       },
       {
-        "src": "audio_tagliati/221_18s_cosine.mp3",
+        "src": "/static/audio_tagliati/221_18s_cosine.mp3",
         "origine": "dinamico"
       }
     ],
@@ -69,19 +69,19 @@
     "immagine": "img/0004.jpg",
     "audio": [
       {
-        "src": "audio/48.mp3",
+        "src": "/static/audio/48.mp3",
         "origine": "statico"
       },
       {
-        "src": "audio/23.mp3",
+        "src": "/static/audio/23.mp3",
         "origine": "statico"
       },
       {
-        "src": "audio_tagliati/48_40s_euclid.mp3",
+        "src": "/static/audio_tagliati/48_40s_euclid.mp3",
         "origine": "dinamico"
       },
       {
-        "src": "audio_tagliati/12_24s_cosine.mp3",
+        "src": "/static/audio_tagliati/12_24s_cosine.mp3",
         "origine": "dinamico"
       }
     ],
