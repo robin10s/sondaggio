@@ -10,23 +10,27 @@
       max-width: 800px;
       margin: auto;
       background: #f9f9f9;
+      color: #333;
     }
-    h1 {
+    h1, h2 {
       text-align: center;
+      color: #0056b3;
     }
     img {
       width: 100%;
       max-width: 400px;
       display: block;
       margin: 10px auto;
+      border-radius: 8px;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.1);
     }
-    .question-block {
+    .question-block, .consent-block {
       display: none;
       margin-bottom: 40px;
       background: #fff;
       padding: 20px;
       border-radius: 10px;
-      box-shadow: 0 0 10px #ccc;
+      box-shadow: 0 0 15px rgba(0,0,0,0.1);
     }
     .visible {
       display: block;
@@ -34,128 +38,209 @@
     .audio-inline {
       display: flex;
       align-items: center;
-      margin-bottom: 10px;
+      margin-bottom: 15px;
+      border: 1px solid #eee;
+      padding: 10px;
+      border-radius: 5px;
+      background: #fafafa;
     }
     audio {
       flex: 1;
-      margin-right: 10px;
+      margin-right: 15px;
     }
     .btn {
+      margin-top: 25px;
+      padding: 12px 25px;
+      font-size: 18px;
+      background-color: #007bff;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      transition: background-color 0.3s ease;
+    }
+    .btn:hover {
+      background-color: #0056b3;
+    }
+    form p {
       margin-top: 20px;
-      padding: 10px 20px;
-      font-size: 16px;
+      margin-bottom: 8px;
+      font-weight: bold;
+    }
+    input[type="number"], select {
+      width: calc(100% - 20px);
+      padding: 10px;
+      margin-bottom: 15px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      box-sizing: border-box;
+    }
+    input[type="checkbox"] {
+      margin-right: 8px;
+      transform: scale(1.2); /* Rende la checkbox leggermente più grande */
+    }
+    label {
+      font-weight: normal;
+      margin-left: 5px;
     }
   </style>
 </head>
 <body>
   <h1>Sondaggio: Cibo e Musica</h1>
-  <div id="quiz-container"></div>
+
+  <div id="consent-block" class="consent-block visible">
+    <h2>Consenso Informato</h2>
+    <p>Benvenuto/a al nostro sondaggio! La tua partecipazione è volontaria e i dati raccolti saranno utilizzati in forma anonima per scopi di ricerca scientifica sul rapporto tra musica ed emozioni legate al cibo.</p>
+    <p>Il sondaggio richiederà circa 5-10 minuti per essere completato. Ti verrà chiesto di ascoltare brevi brani musicali abbinati a immagini di cibo e di esprimere le emozioni che ti suscitano.</p>
+    <p>Alla fine del sondaggio, ti verranno poste alcune domande demografiche (età, genere, ecc.) che ci aiuteranno a contestualizzare i dati. Tutte le tue risposte saranno trattate con la massima riservatezza e i tuoi dati personali non saranno in alcun modo collegati alle tue risposte.</p>
+    <p>Sei libero/a di interrompere il sondaggio in qualsiasi momento.</p>
+    <p>Cliccando su "Accetto e Inizia", confermi di aver letto e compreso questa informativa e di dare il tuo consenso alla partecipazione.</p>
+    <button id="start-quiz-btn" class="btn">Accetto e Inizia</button>
+  </div>
+
+  <div id="quiz-container">
+    </div>
 
   <script>
     const endpoint = "https://api.sheetbest.com/sheets/3eae5dbf-3ae8-41f2-bd48-e7fc1dea8729";
-    const responses = [];
+    const responses = []; // Array per memorizzare le risposte del quiz
 
+    let currentQuestionIndex = 0; // Tiene traccia della domanda corrente visualizzata
+
+    // Funzione per caricare e visualizzare le domande
     async function loadQuestions() {
-      const res = await fetch("/static/domande.json");
-      const fullList = await res.json();
+      // Nascondi il blocco del consenso e mostra il container del quiz
+      document.getElementById("consent-block").classList.remove("visible");
+      document.getElementById("quiz-container").classList.add("visible"); // Rendi visibile il container, la prima domanda sarà 'visible' al suo interno
 
-      // Raggruppa per immagine
-      const grouped = {};
-      fullList.forEach(item => {
-        if (!grouped[item.immagine]) grouped[item.immagine] = [];
-        grouped[item.immagine].push(item);
-      });
+      try {
+        const res = await fetch("/static/domande.json"); // Carica il file JSON
+        if (!res.ok) {
+          throw new Error(`Errore di rete: ${res.status} ${res.statusText}`);
+        }
+        const fullList = await res.json(); // fullList è l'array di tutti i blocchi domanda
 
-      const immagini = Object.keys(grouped);
-      const randomImages = immagini.sort(() => Math.random() - 0.5).slice(0, 10);
+        // Randomizza l'intera lista di domande e prendine 10.
+        // Ogni elemento in 'fullList' è già un "blocchetto" completo (immagine + 4 audio).
+        const randomQuestions = fullList.sort(() => Math.random() - 0.5).slice(0, 10);
 
-      const container = document.getElementById("quiz-container");
+        const container = document.getElementById("quiz-container");
+        container.innerHTML = ''; // Pulisci il container prima di aggiungere nuove domande
 
-      randomImages.forEach((imgName, index) => {
-        const domande = grouped[imgName];
-        const block = document.createElement("div");
-        block.className = "question-block" + (index === 0 ? " visible" : "");
+        // Per ogni domanda (blocchetto) selezionata casualmente
+        randomQuestions.forEach((questionData, index) => {
+          const block = document.createElement("div");
+          block.className = "question-block" + (index === 0 ? " visible" : ""); // Rendi visibile solo il primo blocco
 
-        const img = document.createElement("img");
-        img.src = `/static/${imgName}`;
-        block.appendChild(img);
+          const img = document.createElement("img");
+          // Usa direttamente il percorso dell'immagine dal blocchetto domanda corrente
+          img.src = `/static/${questionData.immagine}`;
+          block.appendChild(img);
 
-        const form = document.createElement("form");
+          const form = document.createElement("form");
 
-        domande[0].audio.forEach((audioObj, i) => {
-          const audioDiv = document.createElement("div");
-          audioDiv.className = "audio-inline";
+          // Itera sui 4 oggetti audio specifici di QUESTA domanda (blocchetto)
+          questionData.audio.forEach((audioObj, i) => {
+            const audioDiv = document.createElement("div");
+            audioDiv.className = "audio-inline";
 
-          const audio = document.createElement("audio");
-          audio.controls = true;
-          audio.src = audioObj.src;
+            const audio = document.createElement("audio");
+            audio.controls = true;
+            // Usa il percorso audio già corretto (con /static/) dal JSON
+            audio.src = audioObj.src;
 
-          const label = document.createElement("label");
-          label.innerHTML = `<input type="checkbox" name="audio" value="${i + 1}"> Audio ${i + 1}`;
+            const label = document.createElement("label");
+            label.innerHTML = `<input type="checkbox" name="audio" value="${i + 1}"> Audio ${i + 1}`; // value 1, 2, 3, 4
 
-          audioDiv.appendChild(audio);
-          audioDiv.appendChild(label);
-          form.appendChild(audioDiv);
+            audioDiv.appendChild(audio);
+            audioDiv.appendChild(label);
+            form.appendChild(audioDiv);
+          });
+
+          // Elementi del form per l'emozione
+          const emotionLabel = document.createElement("p");
+          emotionLabel.textContent = "Che emozione ti ha suscitato la combinazione immagine/audio?";
+          const select = document.createElement("select");
+          select.name = "emozione";
+          select.required = true;
+          ["", "Gioia", "Tristezza", "Rabbia", "Paura", "Sorpresa", "Disgusto", "Serenità", "Frustrazione"].forEach(op => {
+            const option = document.createElement("option");
+            option.value = op;
+            option.textContent = op === "" ? "Seleziona" : op;
+            select.appendChild(option);
+          });
+
+          // Pulsante di navigazione (Avanti/Completa)
+          const button = document.createElement("button");
+          button.type = "submit";
+          button.className = "btn";
+          button.textContent = index < randomQuestions.length - 1 ? "Avanti" : "Completa"; // 'Completa' sull'ultima domanda del quiz
+
+          form.appendChild(emotionLabel);
+          form.appendChild(select);
+          form.appendChild(button);
+
+          // Gestione dell'invio del form per ogni domanda
+          form.addEventListener("submit", async e => {
+            e.preventDefault();
+            const formData = new FormData(form);
+            const selectedAudioIndices = formData.getAll("audio").map(Number); // Ottiene gli indici selezionati (1-based)
+
+            if (selectedAudioIndices.length === 0) {
+              alert("Seleziona almeno un audio per continuare.");
+              return;
+            }
+
+            // Mappa gli indici selezionati ai dettagli dei brani
+            const braniDettagli = selectedAudioIndices.map(i => {
+                const audioIndex = i - 1; // Converti in indice 0-based
+                if (questionData.audio[audioIndex]) {
+                    // Restituisci l'intero oggetto audio per salvare più dettagli
+                    return {
+                        src: questionData.audio[audioIndex].src,
+                        origine: questionData.audio[audioIndex].origine
+                    };
+                }
+                return null;
+            }).filter(Boolean); // Filtra eventuali null (dovuti a errori, ma utile per robustezza)
+
+            const risposta = {
+              immagine_id: questionData.immagine.match(/\d+/)[0], // Estrae solo il numero dall'immagine (es. '0001')
+              audio_selezionati_indici: selectedAudioIndices.join(", "), // Es. "1, 3"
+              brani_selezionati_dettagli: JSON.stringify(braniDettagli), // Salva i dettagli completi dei brani come stringa JSON
+              emozione: formData.get("emozione")
+            };
+
+            responses.push(risposta); // Aggiunge la risposta all'array globale
+
+            // Nasconde la domanda corrente
+            block.classList.remove("visible");
+
+            // Mostra la prossima domanda o le domande finali
+            if (index < randomQuestions.length - 1 && container.children[index + 1]) {
+              container.children[index + 1].classList.add("visible");
+              currentQuestionIndex++; // Aggiorna l'indice della domanda corrente
+            } else {
+              mostraDomandeFinali(container); // Tutte le domande del quiz sono terminate
+            }
+          });
+
+          block.appendChild(form);
+          container.appendChild(block);
         });
-          
-          
 
-        const emotionLabel = document.createElement("p");
-        emotionLabel.textContent = "Che emozione ti ha suscitato la combinazione immagine/audio?";
-        const select = document.createElement("select");
-        select.name = "emozione";
-        select.required = true;
-        ["", "Gioia", "Tristezza", "Rabbia", "Paura", "Sorpresa", "Disgusto", "Serenità", "Frustrazione"].forEach(op => {
-          const option = document.createElement("option");
-          option.value = op;
-          option.textContent = op === "" ? "Seleziona" : op;
-          select.appendChild(option);
-        });
-
-        const button = document.createElement("button");
-        button.type = "submit";
-        button.className = "btn";
-        button.textContent = index < 9 ? "Avanti" : "Completa";
-
-        form.appendChild(emotionLabel);
-        form.appendChild(select);
-        form.appendChild(button);
-
-        form.addEventListener("submit", async e => {
-          e.preventDefault();
-          const formData = new FormData(form);
-          const selected = formData.getAll("audio").map(Number);
-
-          if (selected.length === 0) {
-            alert("Seleziona almeno un audio per continuare.");
-            return;
-          }
-
-          const risposta = {
-            immagine_id: parseInt(imgName),
-            audio_selezionati: selected.map(i => `Audio ${i}`).join(", "),
-            brani_selezionati: selected.map(i => domande[i - 1]?.audio[0] || "N/A").join(", "),
-            emozione: formData.get("emozione")
-          };
-
-          responses.push(risposta);
-          block.classList.remove("visible");
-
-          if (index < 9 && container.children[index + 1]) {
-            container.children[index + 1].classList.add("visible");
-          } else {
-            mostraDomandeFinali(container);
-          }
-        });
-
-        block.appendChild(form);
-        container.appendChild(block);
-      });
+      } catch (error) {
+        console.error("Errore nel caricamento delle domande:", error);
+        container.innerHTML = "<p>Si è verificato un errore nel caricamento del sondaggio. Riprova più tardi.</p>";
+      }
     }
 
+    // Funzione per mostrare le domande finali (demografiche)
     function mostraDomandeFinali(container) {
+      container.innerHTML = ''; // Pulisci il container delle domande del quiz
+
       const finale = document.createElement("div");
-      finale.className = "question-block visible";
+      finale.className = "question-block visible"; // Rendi visibile il blocco finale
       finale.innerHTML = `
         <h2>Dati finali</h2>
         <form id="final-form">
@@ -200,26 +285,46 @@
         </form>
       `;
 
+      // Gestione dell'invio del form finale
       finale.querySelector("#final-form").addEventListener("submit", async (e) => {
         e.preventDefault();
         const datiFinali = Object.fromEntries(new FormData(e.target));
+        // Combina tutte le risposte del quiz con i dati finali
         const dataToSend = responses.map(r => ({ ...r, ...datiFinali }));
 
-        const response = await fetch(endpoint, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(dataToSend)
-        });
+        try {
+          const response = await fetch(endpoint, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(dataToSend)
+          });
 
-        document.body.innerHTML = response.ok
-          ? "<h2>✅ Grazie per aver completato il sondaggio!</h2>"
-          : "<h2>⚠️ Errore durante l'invio delle risposte. Riprova più tardi.</h2>";
+          if (response.ok) {
+            document.body.innerHTML = "<h2>✅ Grazie per aver completato il sondaggio!</h2><p>I tuoi dati sono stati inviati con successo.</p>";
+          } else {
+            const errorText = await response.text();
+            console.error("Errore server durante l'invio:", response.status, errorText);
+            document.body.innerHTML = "<h2>⚠️ Errore durante l'invio delle risposte. Riprova più tardi.</h2><p>Si prega di segnalare l'errore se persiste.</p>";
+          }
+        } catch (error) {
+          console.error("Errore di rete durante l'invio:", error);
+          document.body.innerHTML = "<h2>⚠️ Errore di connessione. Riprova più tardi.</h2><p>Verifica la tua connessione internet.</p>";
+        }
       });
 
       container.appendChild(finale);
     }
 
-    window.addEventListener("DOMContentLoaded", loadQuestions);
+    // Event listener per il pulsante "Accetto e Inizia"
+    document.getElementById("start-quiz-btn").addEventListener("click", loadQuestions);
+
+    // Inizialmente, mostra solo il blocco del consenso
+    // Il quiz-container sarà nascosto e mostrato solo dopo il consenso
+    document.addEventListener("DOMContentLoaded", () => {
+      document.getElementById("quiz-container").classList.remove("visible"); // Assicurati che sia nascosto all'inizio
+      document.getElementById("consent-block").classList.add("visible"); // Assicurati che il consenso sia visibile
+    });
+
   </script>
 </body>
 </html>
