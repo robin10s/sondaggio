@@ -24,8 +24,9 @@
       border-radius: 8px;
       box-shadow: 0 4px 8px rgba(0,0,0,0.1);
     }
-    .question-block, .consent-block {
-      display: none;
+    /* Rimosso .consent-block dagli stili display: none iniziali */
+    .question-block {
+      display: none; /* Inizialmente nascosti, JS li mostrerà uno alla volta */
       margin-bottom: 40px;
       background: #fff;
       padding: 20px;
@@ -33,7 +34,7 @@
       box-shadow: 0 0 15px rgba(0,0,0,0.1);
     }
     .visible {
-      display: block;
+      display: block; /* Rende il blocco visibile */
     }
     .audio-inline {
       display: flex;
@@ -77,7 +78,7 @@
     }
     input[type="checkbox"] {
       margin-right: 8px;
-      transform: scale(1.2); /* Rende la checkbox leggermente più grande */
+      transform: scale(1.2);
     }
     label {
       font-weight: normal;
@@ -87,16 +88,6 @@
 </head>
 <body>
   <h1>Sondaggio: Cibo e Musica</h1>
-
-  <div id="consent-block" class="consent-block visible">
-    <h2>Consenso Informato</h2>
-    <p>Benvenuto/a al nostro sondaggio! La tua partecipazione è volontaria e i dati raccolti saranno utilizzati in forma anonima per scopi di ricerca scientifica sul rapporto tra musica ed emozioni legate al cibo.</p>
-    <p>Il sondaggio richiederà circa 5-10 minuti per essere completato. Ti verrà chiesto di ascoltare brevi brani musicali abbinati a immagini di cibo e di esprimere le emozioni che ti suscitano.</p>
-    <p>Alla fine del sondaggio, ti verranno poste alcune domande demografiche (età, genere, ecc.) che ci aiuteranno a contestualizzare i dati. Tutte le tue risposte saranno trattate con la massima riservatezza e i tuoi dati personali non saranno in alcun modo collegati alle tue risposte.</p>
-    <p>Sei libero/a di interrompere il sondaggio in qualsiasi momento.</p>
-    <p>Cliccando su "Accetto e Inizia", confermi di aver letto e compreso questa informativa e di dare il tuo consenso alla partecipazione.</p>
-    <button id="start-quiz-btn" class="btn">Accetto e Inizia</button>
-  </div>
 
   <div id="quiz-container">
     </div>
@@ -109,7 +100,6 @@
 
     // Funzione per caricare e visualizzare le domande
     async function loadQuestions() {
-      
       try {
         const res = await fetch("/static/domande.json"); // Carica il file JSON
         if (!res.ok) {
@@ -127,7 +117,8 @@
         // Per ogni domanda (blocchetto) selezionata casualmente
         randomQuestions.forEach((questionData, index) => {
           const block = document.createElement("div");
-          block.className = "question-block" + (index === 0 ? " visible" : ""); // Rendi visibile solo il primo blocco
+          // Il primo blocco è visibile, gli altri sono nascosti
+          block.className = "question-block" + (index === 0 ? " visible" : "");
 
           const img = document.createElement("img");
           // Usa direttamente il percorso dell'immagine dal blocchetto domanda corrente
@@ -144,7 +135,7 @@
             const audio = document.createElement("audio");
             audio.controls = true;
             // Usa il percorso audio già corretto (con /static/) dal JSON
-            audio.src = audioObj.src;
+            audio.src = audioObj.src; // Sarà già /static/audio/... o /static/audio_tagliati/...
 
             const label = document.createElement("label");
             label.innerHTML = `<input type="checkbox" name="audio" value="${i + 1}"> Audio ${i + 1}`; // value 1, 2, 3, 4
@@ -188,6 +179,10 @@
               return;
             }
 
+            // Estrai l'ID numerico dall'immagine (es. "0001" da "img/0001.jpg")
+            const imageIdMatch = questionData.immagine.match(/\d+/);
+            const immagine_id = imageIdMatch ? parseInt(imageIdMatch[0]) : null;
+
             // Mappa gli indici selezionati ai dettagli dei brani
             const braniDettagli = selectedAudioIndices.map(i => {
                 const audioIndex = i - 1; // Converti in indice 0-based
@@ -202,7 +197,7 @@
             }).filter(Boolean); // Filtra eventuali null (dovuti a errori, ma utile per robustezza)
 
             const risposta = {
-              immagine_id: questionData.immagine.match(/\d+/)[0], // Estrae solo il numero dall'immagine (es. '0001')
+              immagine_id: immagine_id,
               audio_selezionati_indici: selectedAudioIndices.join(", "), // Es. "1, 3"
               brani_selezionati_dettagli: JSON.stringify(braniDettagli), // Salva i dettagli completi dei brani come stringa JSON
               emozione: formData.get("emozione")
@@ -214,7 +209,7 @@
             block.classList.remove("visible");
 
             // Mostra la prossima domanda o le domande finali
-            if (index < randomQuestions.length - 1 && container.children[index + 1]) {
+            if (index < randomQuestions.length - 1) {
               container.children[index + 1].classList.add("visible");
               currentQuestionIndex++; // Aggiorna l'indice della domanda corrente
             } else {
@@ -312,15 +307,8 @@
       container.appendChild(finale);
     }
 
-    // Event listener per il pulsante "Accetto e Inizia"
-    document.getElementById("start-quiz-btn").addEventListener("click", loadQuestions);
-
-    // Inizialmente, mostra solo il blocco del consenso
-    // Il quiz-container sarà nascosto e mostrato solo dopo il consenso
-    document.addEventListener("DOMContentLoaded", () => {
-      document.getElementById("quiz-container").classList.remove("visible"); // Assicurati che sia nascosto all'inizio
-      document.getElementById("consent-block").classList.add("visible"); // Assicurati che il consenso sia visibile
-    });
+    // Al caricamento della pagina, inizia a caricare le domande
+    document.addEventListener("DOMContentLoaded", loadQuestions);
 
   </script>
 </body>
