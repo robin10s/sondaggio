@@ -88,6 +88,16 @@
 <body>
   <h1>Sondaggio: Cibo e Musica</h1>
 
+  <div id="consent-block" class="consent-block visible">
+    <h2>Consenso Informato</h2>
+    <p>Benvenuto/a al nostro sondaggio! La tua partecipazione è volontaria e i dati raccolti saranno utilizzati in forma anonima per scopi di ricerca scientifica sul rapporto tra musica ed emozioni legate al cibo.</p>
+    <p>Il sondaggio richiederà circa 5-10 minuti per essere completato. Ti verrà chiesto di ascoltare brevi brani musicali abbinati a immagini di cibo e di esprimere le emozioni che ti suscitano.</p>
+    <p>Alla fine del sondaggio, ti verranno poste alcune domande demografiche (età, genere, ecc.) che ci aiuteranno a contestualizzare i dati. Tutte le tue risposte saranno trattate con la massima riservatezza e i tuoi dati personali non saranno in alcun modo collegati alle tue risposte.</p>
+    <p>Sei libero/a di interrompere il sondaggio in qualsiasi momento.</p>
+    <p>Cliccando su "Accetto e Inizia", confermi di aver letto e compreso questa informativa e di dare il tuo consenso alla partecipazione.</p>
+    <button id="start-quiz-btn" class="btn">Accetto e Inizia</button>
+  </div>
+
   <div id="quiz-container">
     </div>
 
@@ -99,10 +109,7 @@
 
     // Funzione per caricare e visualizzare le domande
     async function loadQuestions() {
-      // Nascondi il blocco del consenso e mostra il container del quiz
-      document.getElementById("consent-block").classList.remove("visible");
-      document.getElementById("quiz-container").classList.add("visible"); // Rendi visibile il container, la prima domanda sarà 'visible' al suo interno
-
+      
       try {
         const res = await fetch("/static/domande.json"); // Carica il file JSON
         if (!res.ok) {
