@@ -184,9 +184,18 @@
             const immagine_id = imageIdMatch ? parseInt(imageIdMatch[0]) : null;
 
             const audio_ids = selectedAudioIndices.map(i => {
-              const audioSrc = questionData.audio[i - 1].src;
-              const match = audioSrc.match(/\/(\d+)(?:_|\.mp3)/);
-              return match ? match[1] : "unknown";
+              const audioObj = questionData.audio[i - 1];
+              const src = audioObj.src;
+
+              if (audioObj.origine === "statico") {
+                // Estrai solo il numero (es. 1865)
+                const match = src.match(/\/(\d+)\.mp3$/);
+                return match ? match[1] : "unknown";
+              } else {
+                // Usa il nome completo del file (es. 1789_131s_cosine.mp3)
+                const match = src.match(/\/([^\/]+\.mp3)$/);
+                return match ? match[1] : "unknown";
+              }
             });
             
             
