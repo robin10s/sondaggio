@@ -183,23 +183,16 @@
             const imageIdMatch = questionData.immagine.match(/\d+/);
             const immagine_id = imageIdMatch ? parseInt(imageIdMatch[0]) : null;
 
-            // Mappa gli indici selezionati ai dettagli dei brani
-            const braniDettagli = selectedAudioIndices.map(i => {
-                const audioIndex = i - 1; // Converti in indice 0-based
-                if (questionData.audio[audioIndex]) {
-                    // Restituisci l'intero oggetto audio per salvare più dettagli
-                    return {
-                        src: questionData.audio[audioIndex].src,
-                        origine: questionData.audio[audioIndex].origine
-                    };
-                }
-                return null;
-            }).filter(Boolean); // Filtra eventuali null (dovuti a errori, ma utile per robustezza)
-
+            const audio_ids = selectedAudioIndices.map(i => {
+              const audioSrc = questionData.audio[i - 1].src;
+              const match = audioSrc.match(/\/(\d+)(?:_|\.mp3)/);
+              return match ? match[1] : "unknown";
+            });
+            
+            
             const risposta = {
               immagine_id: immagine_id,
-              audio_selezionati_indici: selectedAudioIndices.join(", "), // Es. "1, 3"
-              brani_selezionati_dettagli: JSON.stringify(braniDettagli), // Salva i dettagli completi dei brani come stringa JSON
+              audio_ids: audio_ids.join (","), // Salva i dettagli completi dei brani come stringa JSON
               emozione: formData.get("emozione")
             };
 
@@ -282,7 +275,16 @@
         e.preventDefault();
         const datiFinali = Object.fromEntries(new FormData(e.target));
         // Combina tutte le risposte del quiz con i dati finali
-        const dataToSend = responses.map(r => ({ ...r, ...datiFinali }));
+        const dataToSend = responses.map(r => ({
+          immagine_id: r.immagine_id,
+          audio_ids: r.audio_ids,
+          emozione: r.emozione,
+          eta: datiFinali.eta,
+          genere: datiFinali.genere,
+          musica: datiFinali.musica,
+          cucina: datiFinali.cucina,
+          dispositivo: datiFinali.dispositivo
+        }));
 
         try {
           const response = await fetch(endpoint, {
