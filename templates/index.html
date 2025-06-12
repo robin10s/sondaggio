@@ -119,11 +119,22 @@
           const block = document.createElement("div");
           // Il primo blocco è visibile, gli altri sono nascosti
           block.className = "question-block" + (index === 0 ? " visible" : "");
+          
+          const counter = document.createElement ("h3");
+          counter.textContent = 'Domanda ${index + 1} di {randomQuestions.lenght}';
+          block.appendChild(counter);
 
           const img = document.createElement("img");
           // Usa direttamente il percorso dell'immagine dal blocchetto domanda corrente
           img.src = `/static/${questionData.immagine}`;
           block.appendChild(img);
+          
+          const instruction = document.createElement("p");
+            instruction.style.fontStyle = "italic";
+            instruction.style.marginTop = "10px";
+            instruction.textContent = "Scegli un brano che secondo te si associa meglio al cibo, alcune immagini potrebbero non avere quattro scelte.";
+            block.appendChild(instruction);
+
 
           const form = document.createElement("form");
 
