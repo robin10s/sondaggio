@@ -121,7 +121,7 @@
           block.className = "question-block" + (index === 0 ? " visible" : "");
           
           const counter = document.createElement ("h3");
-          counter.textContent = 'Domanda ${index + 1} di {randomQuestions.lenght}';
+          counter.textContent = 'Domanda ${index + 1} di ${randomQuestions.length}';
           block.appendChild(counter);
 
           const img = document.createElement("img");
